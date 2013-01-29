@@ -1,6 +1,16 @@
 import ipdb
 import numpy
 import pylab
+import datetime
+
+def parsedate(datestring):
+    part1, part2 = datestring.split(' ')
+    
+    year, month, day = part1.split('-')
+    
+    hour, minute, second = part2.split(':')
+    
+    return year, month, day, hour, minute, second
 
 # Setup of .csv file:
 #       "row_added_at","status_id","user_id","status_date","status_text","status_is_retweet","status_retweet_of","status_retweet_count","status_latitude","status_longitude"
@@ -56,56 +66,49 @@ sort_inds = num_tweets[0, :].argsort()[::-1]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-k = 0
-# k = 306 # The person who tweets the least
+# ids = range(0, 20) # Gets the most frequent tweeters
 
-ts = user_dict[str(num_tweets[1, sort_inds][k])]
+ids = range(1, 21) # Gets the least frequent tweeters
+ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
 
-# Each entry in ts is a string of the form:
-# 'year-month-day hour:min:sec', e.g. '2011-05-03 21:53:18'
+f, axarr = pylab.subplots(len(ids), sharex=True)
 
-import datetime
+for axind, uid in enumerate(ids):
+    ts = user_dict[str(num_tweets[1, sort_inds][uid])]
 
-def parsedate(datestring):
-    part1, part2 = datestring.split(' ')
+    # Each entry in ts is a string of the form:
+    # 'year-month-day hour:min:sec', e.g. '2011-05-03 21:53:18'
+
+    # For the bin Laden data set, all of the Tweets occur on or after 2011-05-01. So use that to make
+    # the start reference date.
+
+    start_time = (2011, 5, 1, 0, 0, 0) # (year, month, day, hour, min, second)
+
+    reference_date = datetime.datetime(year = start_time[0], month = start_time[1], day = start_time[2], hour = start_time[3], minute = start_time[4], second = start_time[5])
+
+    # Store the (relative) time the tweet occurred.
+
+    tweet_time = []
+
+    for ind in range(0, len(ts)):
     
-    year, month, day = part1.split('-')
+        t1 = map(int, parsedate(ts[ind]))
     
-    hour, minute, second = part2.split(':')
+        date_obj1 = datetime.datetime(year = t1[0], month = t1[1], day = t1[2], hour = t1[3], minute = t1[4], second = t1[5])
     
-    return year, month, day, hour, minute, second
+        tweet_time.append((date_obj1 - reference_date).total_seconds())
 
-# For the bin Laden data set, all of the Tweets occur on or after 2011-05-01. So use that to make
-# the start reference date.
+    seconds = tweet_time[-1] + 1 # The total number of seconds from the start_time
 
-start_time = (2011, 5, 1, 0, 0, 0) # (year, month, day, hour, min, second)
+    binarized = numpy.zeros(seconds)
 
-reference_date = datetime.datetime(year = start_time[0], month = start_time[1], day = start_time[2], hour = start_time[3], minute = start_time[4], second = start_time[5])
+    binarized[tweet_time] = 1
 
-# Store the (relative) time the tweet occurred.
+    axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
+    axarr[axind].yaxis.set_visible(False)
 
-tweet_time = []
-
-for ind in range(0, len(ts)):
-    
-    t1 = map(int, parsedate(ts[ind]))
-    
-    date_obj1 = datetime.datetime(year = t1[0], month = t1[1], day = t1[2], hour = t1[3], minute = t1[4], second = t1[5])
-    
-    tweet_time.append((date_obj1 - reference_date).total_seconds())
-
-seconds = tweet_time[-1] + 1 # The total number of seconds from the start_time
-
-binarized = numpy.zeros(seconds)
-
-binarized[tweet_time] = 1
-
-f, axarr = pylab.subplots(1, sharex=True)
-
-axarr.vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
-axarr.yaxis.set_visible(False)
-pylab.xlabel('Time (s)')
 pylab.locator_params(axis = 'x', nbins = 5)
+pylab.xlabel('Time (s)')
 pylab.savefig('_num_tweets.pdf')
 pylab.show()
 
