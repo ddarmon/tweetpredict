@@ -66,10 +66,6 @@ ts = user_dict[str(num_tweets[1, sort_inds][k])]
 
 import datetime
 
-# Get the times between the tweets:
-
-interarrivals = []
-
 def parsedate(datestring):
     part1, part2 = datestring.split(' ')
     
@@ -79,38 +75,43 @@ def parsedate(datestring):
     
     return year, month, day, hour, minute, second
 
-for ind in range(1, len(ts)):
+# For the bin Laden data set, all of the Tweets occur on or after 2011-05-01. So use that to make
+# the start reference date.
+
+start_time = (2011, 5, 1, 0, 0, 0) # (year, month, day, hour, min, second)
+
+reference_date = datetime.datetime(year = start_time[0], month = start_time[1], day = start_time[2], hour = start_time[3], minute = start_time[4], second = start_time[5])
+
+# Store the (relative) time the tweet occurred.
+
+tweet_time = []
+
+for ind in range(0, len(ts)):
     
-    t1 = map(int, parsedate(ts[ind - 1]))
-    t2 = map(int, parsedate(ts[ind]))
+    t1 = map(int, parsedate(ts[ind]))
     
     date_obj1 = datetime.datetime(year = t1[0], month = t1[1], day = t1[2], hour = t1[3], minute = t1[4], second = t1[5])
-    date_obj2 = datetime.datetime(year = t2[0], month = t2[1], day = t2[2], hour = t2[3], minute = t2[4], second = t2[5])
     
-    interarrivals.append((date_obj2 - date_obj1).seconds)
+    tweet_time.append((date_obj1 - reference_date).total_seconds())
 
-sorted_interarrivals = sorted(interarrivals) # Sort the interarrivals, to give some idea of the time scales for this system
-
-seconds = numpy.sum(interarrivals) + 1 # The total number of seconds in the record
+seconds = tweet_time[-1] + 1 # The total number of seconds from the start_time
 
 binarized = numpy.zeros(seconds)
 
-binarized[0] = 1
-binarized[numpy.cumsum(interarrivals)] = 1
+binarized[tweet_time] = 1
 
 f, axarr = pylab.subplots(1, sharex=True)
 
 axarr.vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
 axarr.yaxis.set_visible(False)
 pylab.xlabel('Time (s)')
-pylab.xlim(0, numpy.max(numpy.cumsum(interarrivals)[-1]))
 pylab.locator_params(axis = 'x', nbins = 5)
 pylab.savefig('_num_tweets.pdf')
 pylab.show()
 
-pylab.figure()
-pylab.hist(interarrivals, bins = numpy.unique(interarrivals).shape[0], normed = True)
-pylab.show()
+# pylab.figure()
+# pylab.hist(interarrivals, bins = numpy.unique(interarrivals).shape[0], normed = True)
+# pylab.show()
 
 # Q: How to deal with *night-time*?
 
