@@ -41,6 +41,9 @@ user_dict = {}
 
 line = ofile.readline()
 
+time_all_tweets = [] # Keep track of when *all* of the tweets occur, so we can
+                     # set a relative t = 0.
+
 while line != '':
     line = ofile.readline()
     
@@ -52,11 +55,17 @@ while line != '':
 
         time = lsplit[0] # Get out the time of the tweet
         user = lsplit[2] # Get out the userid of the person who tweeted
-
+        
+        year, month, day, hour, minute, second = map(int, parsedate(time))
+        
+        cur_time = datetime.datetime(year = year, month = month, day = day, hour = hour, minute = minute, second = second)
+        
+        time_all_tweets.append(cur_time)
+        
         if user in user_dict: # If the user is in the dictionary, add the time to the list of times they tweeted.
-            user_dict[user].append(time.lstrip('\"').rstrip('\"'))
+            user_dict[user].append(cur_time)
         else: # If not, add the user to the dictionary and record the time of their first tweet
-            user_dict[user] = [time.lstrip('\"').rstrip('\"')]
+            user_dict[user] = [cur_time]
     else:
         pass
 
@@ -70,6 +79,13 @@ for ind, userid in enumerate(user_dict):
 
 sort_inds = num_tweets[0, :].argsort()[::-1]
 
+# Set the reference start time to the time of the first tweet recorded over the entire
+# network.
+
+time_all_tweets.sort() # Sorts the times of the tweets from oldest to newest
+
+reference_date = time_all_tweets[0]
+
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
@@ -80,7 +96,7 @@ sort_inds = num_tweets[0, :].argsort()[::-1]
 
 # ids = random.sample(range(len(sort_inds)), 10)
 
-ids = [0]
+ids = [0, 1]
 
 f, axarr = pylab.subplots(len(ids), sharex=True)
 
@@ -102,25 +118,25 @@ for axind, uid in enumerate(ids):
     # start_time = (2011, 5, 1, 0, 0, 0)
     # reference_date = datetime.datetime(year = start_time[0], month = start_time[1], day = start_time[2], hour = start_time[3], minute = start_time[4], second = start_time[5])
     
-    # Set the reference start time to the time of the first tweet recorded over the entire
-    # network.
-    
-    
-    
     # Store the (relative) time each tweet occurred.
     
     tweet_time = []
     
     for ind in range(0, len(ts)):
     
-        t1 = map(int, parsedate(ts[ind]))
+        t1 = ts[ind]
     
-        date_obj1 = datetime.datetime(year = t1[0], month = t1[1], day = t1[2], hour = t1[3], minute = t1[4], second = t1[5])
-    
-        tweet_time.append((date_obj1 - reference_date).total_seconds())
+        tweet_time.append((t1 - reference_date).total_seconds())
 
     seconds = tweet_time[-1] + 1 # The total number of seconds from the start_time
 
     binarized = numpy.zeros(seconds)
 
     binarized[tweet_time] = 1
+    
+    axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
+    axarr[axind].yaxis.set_visible(False)
+
+pylab.locator_params(axis = 'x', nbins = 5)
+pylab.xlabel('Time (s)')
+pylab.show()
