@@ -96,9 +96,12 @@ reference_date = time_all_tweets[0]
 
 # ids = random.sample(range(len(sort_inds)), 10)
 
-ids = [0, 1]
+ids = [0, 1, 3]
 
-f, axarr = pylab.subplots(len(ids), sharex=True)
+toplot = True
+
+if toplot:
+    f, axarr = pylab.subplots(len(ids), sharex=True)
 
 for axind, uid in enumerate(ids):
     ts = user_dict[str(num_tweets[1, sort_inds][uid])]
@@ -134,9 +137,18 @@ for axind, uid in enumerate(ids):
 
     binarized[tweet_time] = 1
     
-    axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
-    axarr[axind].yaxis.set_visible(False)
+    if toplot:
+        axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
+        axarr[axind].yaxis.set_visible(False)
 
-pylab.locator_params(axis = 'x', nbins = 5)
-pylab.xlabel('Time (s)')
-pylab.show()
+ofile = open('twitter_ts.dat', 'w')
+
+for val in binarized:
+    ofile.write('{} '.format(int(val)))
+    
+ofile.close()
+
+if toplot:
+    pylab.locator_params(axis = 'x', nbins = 5)
+    pylab.xlabel('Time (s)')
+    pylab.show()
