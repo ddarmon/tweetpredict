@@ -13,6 +13,29 @@ def parsedate(datestring):
     
     return year, month, day, hour, minute, second
 
+def coarse_resolution(binarized, iresolution = 60):
+    # Recall: The current resolution is in seconds. We want to be able
+    # to group together anything from seconds
+
+    # The number of bins we'll have after coarsening.
+
+    n_coarsebins = numpy.divide(binarized.shape[0], iresolution)
+
+    # An (empty) binary time series to hold the
+    # coarsened time series.
+
+    binarized_coarse = numpy.zeros(n_coarsebins)
+
+    for cind in range(n_coarsebins):
+        binarized_coarse[cind] = numpy.sum(binarized[(cind*iresolution):((cind + 1)*iresolution)])
+    
+    # Convert the *number* of tweets in the time interval
+    # into *whether* a tweet occurs in that time interval.
+    
+    binarized_coarse[binarized_coarse != 0] = 1
+    
+    return binarized_coarse
+
 # Setup of .csv file:
 #       "row_added_at","status_id","user_id","status_date","status_text","status_is_retweet","status_retweet_of","status_retweet_count","status_latitude","status_longitude"
 #
@@ -89,22 +112,41 @@ reference_date = time_all_tweets[0]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-# ids = range(0, 20) # Gets the most frequent tweeters
+ids = range(0, 20) # Gets the most frequent tweeters
 
 # ids = range(1, 21) # Gets the least frequent tweeters
 # ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
 
 # ids = random.sample(range(len(sort_inds)), 10)
 
-ids = [0, 1, 3]
+# ids = [0, 1]
 
 toplot = True
+
+# Set byuser to TRUE if you want to specify the userid,
+# and FALSE if you want to specify the kth highest
+# frequency tweeter.
+
+byuser = False
+
+tocoarsen = True
+
+# The number of seconds per each in the discretized 
+# time series bin.
+
+iresolution = 60*60
+
+if byuser == True:
+    ids = ['43600056', '92102625', '92285511']
 
 if toplot:
     f, axarr = pylab.subplots(len(ids), sharex=True)
 
 for axind, uid in enumerate(ids):
-    ts = user_dict[str(num_tweets[1, sort_inds][uid])]
+    if byuser == True:
+        ts = user_dict[uid]
+    else:
+        ts = user_dict[str(num_tweets[1, sort_inds][uid])]
     
     # Sort the time series, since apparently the tweets aren't necessarily
     # stored in chronological order.
@@ -136,6 +178,15 @@ for axind, uid in enumerate(ids):
     binarized = numpy.zeros(seconds)
 
     binarized[tweet_time] = 1
+    
+    # If we decide to coarse grain the timeseries below the
+    # 1 second resolution.
+    
+    if tocoarsen:
+        # Coarse grain the time series.
+        
+        binarized = coarse_resolution(binarized, iresolution = iresolution)
+        
     
     if toplot:
         axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
