@@ -112,16 +112,16 @@ reference_date = time_all_tweets[0]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-ids = range(0, 20) # Gets the most frequent tweeters
+ids = range(20, 1000) # Gets the most frequent tweeters
 
 # ids = range(1, 21) # Gets the least frequent tweeters
 # ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
 
 # ids = random.sample(range(len(sort_inds)), 10)
 
-# ids = [0, 1]
+# ids = [0]
 
-toplot = True
+toplot = False
 
 # Set byuser to TRUE if you want to specify the userid,
 # and FALSE if you want to specify the kth highest
@@ -134,7 +134,7 @@ tocoarsen = True
 # The number of seconds per each in the discretized 
 # time series bin.
 
-iresolution = 60*60
+iresolution = 1
 
 if byuser == True:
     ids = ['43600056', '92102625', '92285511']
@@ -147,6 +147,7 @@ for axind, uid in enumerate(ids):
         ts = user_dict[uid]
     else:
         ts = user_dict[str(num_tweets[1, sort_inds][uid])]
+        user_id = num_tweets[1, sort_inds][uid]
     
     # Sort the time series, since apparently the tweets aren't necessarily
     # stored in chronological order.
@@ -191,13 +192,13 @@ for axind, uid in enumerate(ids):
     if toplot:
         axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
         axarr[axind].yaxis.set_visible(False)
-
-ofile = open('twitter_ts.dat', 'w')
-
-for val in binarized:
-    ofile.write('{} '.format(int(val)))
     
-ofile.close()
+    ofile = open('timeseries/twitter_ts_{}-{}.dat'.format(user_id, iresolution), 'w')
+
+    for val in binarized:
+        ofile.write('{} '.format(int(val)))
+
+    ofile.close()
 
 if toplot:
     pylab.locator_params(axis = 'x', nbins = 5)
