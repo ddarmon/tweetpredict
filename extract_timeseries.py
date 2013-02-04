@@ -112,7 +112,7 @@ reference_date = time_all_tweets[0]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-ids = range(20, 1000) # Gets the most frequent tweeters
+# ids = range(1000, len(user_dict)) # Gets the most frequent tweeters
 
 # ids = range(1, 21) # Gets the least frequent tweeters
 # ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
@@ -121,15 +121,20 @@ ids = range(20, 1000) # Gets the most frequent tweeters
 
 # ids = [0]
 
-toplot = False
+toplot = True
 
 # Set byuser to TRUE if you want to specify the userid,
 # and FALSE if you want to specify the kth highest
 # frequency tweeter.
 
-byuser = False
+byuser = True
 
 tocoarsen = True
+
+tosave = False
+
+if tosave == False:
+    print 'Warning: the time series are *not* being saved!'
 
 # The number of seconds per each in the discretized 
 # time series bin.
@@ -137,14 +142,24 @@ tocoarsen = True
 iresolution = 1
 
 if byuser == True:
-    ids = ['43600056', '92102625', '92285511']
+    # ids = ['43600056', '92102625', '92285511'] # UniBul accounts
+    
+    user_file = open('to_investigate.dat')
+    
+    ids = user_file.readline().split(',')
+    
+    user_file.close()
 
 if toplot:
     f, axarr = pylab.subplots(len(ids), sharex=True)
 
 for axind, uid in enumerate(ids):
+    if axind%100 == 0:
+        print 'Parsing file for Tweeter {}...'.format(axind)
+    
     if byuser == True:
         ts = user_dict[uid]
+        user_id = uid
     else:
         ts = user_dict[str(num_tweets[1, sort_inds][uid])]
         user_id = num_tweets[1, sort_inds][uid]
@@ -193,12 +208,11 @@ for axind, uid in enumerate(ids):
         axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
         axarr[axind].yaxis.set_visible(False)
     
-    ofile = open('timeseries/twitter_ts_{}-{}.dat'.format(user_id, iresolution), 'w')
-
-    for val in binarized:
-        ofile.write('{} '.format(int(val)))
-
-    ofile.close()
+    if tosave == True:
+        ofile = open('timeseries/twitter_ts_{}-{}.dat'.format(user_id, iresolution), 'w')
+        for val in binarized:
+            ofile.write('{} '.format(int(val)))
+        ofile.close()
 
 if toplot:
     pylab.locator_params(axis = 'x', nbins = 5)
