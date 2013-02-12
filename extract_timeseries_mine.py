@@ -104,7 +104,7 @@ reference_date = time_all_tweets[0]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-ids = range(0, 10) # Gets the most frequent tweeters
+ids = range(0, 5) # Gets the most frequent tweeters
 
 # ids = range(1, 11) # Gets the least frequent tweeters
 # ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
