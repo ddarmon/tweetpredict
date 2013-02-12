@@ -48,49 +48,38 @@ def coarse_resolution(binarized, iresolution = 60):
 #
 # Think of a neuron firing v. not!
 
-# NOTE: We need to distinguish between .tsv and .csv files.
-
-delimit_type = 'tsv'
-
-ofile = open('../Binladen.tsv')
-
-# delimit_type = 'csv'
-# 
-# ofile = open('../Irene15K.csv')
+ofile = open('../timeseries.tsv')
 
 # Create hash table of the form {userid : [time_of_tweet1, time_of_tweet2, ..., time_of_tweetT]}
 
 user_dict = {}
 
-line = ofile.readline()
-
 time_all_tweets = [] # Keep track of when *all* of the tweets occur, so we can
                      # set a relative t = 0.
 
-while line != '':
-    line = ofile.readline()
-    
-    if line[:4]=='2011': # Several of the lines are broken up (in my opinion, unecessarily). This catches those lines.
-        if delimit_type  == 'csv':
-            lsplit = line.split(',')
-        elif delimit_type == 'tsv':
-            lsplit = line.split('\t')
+count = 0
 
-        time = lsplit[0] # Get out the time of the tweet
-        user = lsplit[2] # Get out the userid of the person who tweeted
-        
-        year, month, day, hour, minute, second = map(int, parsedate(time))
-        
-        cur_time = datetime.datetime(year = year, month = month, day = day, hour = hour, minute = minute, second = second)
-        
-        time_all_tweets.append(cur_time)
-        
-        if user in user_dict: # If the user is in the dictionary, add the time to the list of times they tweeted.
-            user_dict[user].append(cur_time)
-        else: # If not, add the user to the dictionary and record the time of their first tweet
-            user_dict[user] = [cur_time]
-    else:
-        pass
+for line in ofile:
+    if count % 100000 == 0:
+        print 'On line {}\n'.format(count)
+
+    count += 1
+
+    lsplit = line.split('\t')
+
+    time = lsplit[0] # Get out the time of the tweet
+    user = lsplit[1].rstrip() # Get out the userid of the person who tweeted
+    
+    year, month, day, hour, minute, second = map(int, parsedate(time))
+    
+    cur_time = datetime.datetime(year = year, month = month, day = day, hour = hour, minute = minute, second = second)
+    
+    time_all_tweets.append(cur_time)
+    
+    if user in user_dict: # If the user is in the dictionary, add the time to the list of times they tweeted.
+        user_dict[user].append(cur_time)
+    else: # If not, add the user to the dictionary and record the time of their first tweet
+        user_dict[user] = [cur_time]
 
 ofile.close()
 
@@ -112,12 +101,12 @@ reference_date = time_all_tweets[0]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-ids = range(0, 3) # Gets the most frequent tweeters
+# ids = range(0, 10) # Gets the most frequent tweeters
 
-# ids = range(1, 21) # Gets the least frequent tweeters
+# ids = range(1, 11) # Gets the least frequent tweeters
 # ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
 
-# ids = random.sample(range(len(sort_inds)), 10)
+ids = random.sample(range(len(sort_inds)), 10)
 
 # ids = [0]
 
@@ -139,7 +128,7 @@ if tosave == False:
 # The number of seconds per each in the discretized 
 # time series bin.
 
-iresolution = 30
+iresolution = 60*60
 
 if byuser == True:
     # ids = ['43600056', '92102625', '92285511'] # UniBul accounts
