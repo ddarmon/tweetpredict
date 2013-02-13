@@ -86,6 +86,10 @@ for fname in files:
 
     ofile.close()
 
+# Create a 2 * (number of users) array. The first row contains 
+# the number of tweets made by that person. The second row
+# contains the userid (as an integer) for that person.
+
 num_tweets = numpy.zeros((2, len(user_dict)), dtype = 'int32')
 
 for ind, userid in enumerate(user_dict):
@@ -104,7 +108,7 @@ reference_date = time_all_tweets[0]
 # To extract the time-of-tweets for the (k + 1)st most common tweeter, use
 # the following line of code.
 
-ids = range(0, 5) # Gets the most frequent tweeters
+ids = range(0, 10) # Gets the most frequent tweeters
 
 # ids = range(1, 11) # Gets the least frequent tweeters
 # ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
@@ -194,8 +198,15 @@ for axind, uid in enumerate(ids):
         # Coarse grain the time series.
         
         binarized = coarse_resolution(binarized, iresolution = iresolution)
-        
-    
+
+        # Recompute 'seconds', that is, the total number of
+        # units of time, where the unit is given by iresolution.
+
+        seconds = numpy.ceil((tweet_time[-1] + 1)/float(iresolution)) # The total number of time units from start_time
+
+
+    # print 'The true number of Tweets is {}. After binning, there appear to be {}.\nAfter coarsening, there are {}.'.format(len(tweet_time), numpy.unique(tweet_time).shape[0], numpy.sum(binarized))
+
     if toplot:
         axarr[axind].vlines(numpy.arange(seconds)[binarized==1], -0.5, 0.5)
         axarr[axind].yaxis.set_visible(False)
@@ -208,5 +219,8 @@ for axind, uid in enumerate(ids):
 
 if toplot:
     pylab.locator_params(axis = 'x', nbins = 5)
-    pylab.xlabel('Time (each time tick corresponds to {} s)'.format(iresolution))
+    if tocoarsen == True:
+        pylab.xlabel('Time (each time tick corresponds to {} s)'.format(iresolution))
+    else:
+        pylab.xlabel('Time (each time tick corresponds to 1 s)')
     pylab.show()
