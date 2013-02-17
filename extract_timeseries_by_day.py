@@ -114,7 +114,7 @@ for user_rank in xrange(20):
 
     reference_date = ts[0]
 
-    ts_by_day = divide_by_day(reference_date, ts, num_days = 20)
+    ts_by_day = divide_by_day(reference_date, ts, num_days = 20, user_id = user_id, toplot = True)
 
     def export_ts(ts):
         ofile = open('byday-1s-{0}.dat'.format(user_id), 'w')

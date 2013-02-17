@@ -31,7 +31,7 @@ def binarize_timeseries(day, num_bins):
 
 	return binarized
 
-def divide_by_day(reference_date, ts, num_days):
+def divide_by_day(reference_date, ts, num_days, user_id = 'NA', toplot = False):
 	# Idea: Set a starttime and an endtime. Collect all of the ts[i]
 	# that lie between starttime and endtime. Generate a binary timeseries
 	# from that.
@@ -72,7 +72,8 @@ def divide_by_day(reference_date, ts, num_days):
 
 	num_bins = (endtime - starttime).total_seconds() + 1
 
-	f, axarr = pylab.subplots(num_days, sharex=True)
+	if toplot:
+		f, axarr = pylab.subplots(num_days, sharex=True)
 
 	for axind, day in enumerate(ts_by_day):
 		if axind > num_days-1:
@@ -80,7 +81,15 @@ def divide_by_day(reference_date, ts, num_days):
 
 		binarized = binarize_timeseries(day, num_bins)
 
-		axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
-		axarr[axind].yaxis.set_visible(False)
+		if toplot:
+			axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
+			axarr[axind].yaxis.set_visible(False)
+
+	if toplot:
+		pylab.locator_params(axis = 'x', nbins = 5)
+		pylab.xlabel('Time (each time tick corresponds to 1 s)')
+		pylab.savefig('raster-{}.pdf'.format(user_id))
+
+	pylab.show()
 
 	return ts_by_day
