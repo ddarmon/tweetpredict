@@ -105,72 +105,32 @@ time_all_tweets.sort() # Sorts the times of the tweets from oldest to newest
 
 reference_date = time_all_tweets[0]
 
-# To extract the time-of-tweets for the (k + 1)st most common tweeter, use
-# the following line of code.
-
-# ids = range(0, 7) # Gets the most frequent tweeters
-
-# ids = range(1, 11) # Gets the least frequent tweeters
-# ids = map(lambda input : -input, ids) # Gets the least frequent tweeters
-
-# ids = random.sample(range(len(sort_inds)), 10)
-
-ids = [0]
-
-toplot = True
-
-# Set byuser to TRUE if you want to specify the userid,
-# and FALSE if you want to specify the kth highest
-# frequency tweeter.
-
-byuser = False
-
-tocoarsen = False
-
-tosave = False
-
-if tosave == False:
-    print 'Warning: the time series are *not* being saved!'
-
-# The number of seconds per each in the discretized 
-# time series bin.
-
-iresolution = 60*15
-
-if byuser == True:
-    # ids = ['43600056', '92102625', '92285511'] # UniBul accounts
-    
-    user_file = open('to_investigate.dat')
-    
-    ids = user_file.readline().split(',')
-    
-    user_file.close()
-
 from dividebyday import divide_by_day, binarize_timeseries
 
-user_rank = 2
+for user_rank in xrange(20):
+    user_id = str(num_tweets[1, sort_inds][user_rank])
 
-ts = user_dict[str(num_tweets[1, sort_inds][user_rank])]
+    ts = user_dict[user_id]
 
-reference_date = ts[0]
+    reference_date = ts[0]
 
-ts_by_day = divide_by_day(reference_date, ts, num_days = 20)
+    ts_by_day = divide_by_day(reference_date, ts, num_days = 20)
 
-def export_ts(ts):
-    ofile = open('byday.dat', 'w')
+    def export_ts(ts):
+        ofile = open('byday-1s-{0}.dat'.format(user_id), 'w')
 
-    for day in ts:
-        #!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!
-        # You'll want to fix the hard set of num_bins
-        #!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!
+        for day in ts:
+            #!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!
+            # You'll want to fix the hard set of num_bins
+            #!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!
 
-        binarized = binarize_timeseries(day, 57601)
+            binarized = binarize_timeseries(day, 57601)
 
-        for symbol in binarized:
-            ofile.write("{0} ".format(int(symbol)))
+            for symbol in binarized:
+                ofile.write("{0}".format(int(symbol)))
 
-        ofile.write("\n")
+            ofile.write("\n")
 
-    ofile.close()
+        ofile.close()
 
-export_ts(ts_by_day[1:10])
+    export_ts(ts_by_day[1:20])

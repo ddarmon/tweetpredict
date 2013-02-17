@@ -19,8 +19,8 @@ if len(sys.argv) > 1:
 else:
 	historyLength = 2
 
-is_multiline = True
+is_multiline = False
 
-cssr_interface.run_CSSR(filename = fname, L = historyLength, savefiles = True, showdot = True, is_multiline = True, showCSSRoutput = True)
+cssr_interface.run_CSSR(filename = fname, L = historyLength, savefiles = True, showdot = True, is_multiline = is_multiline, showCSSRoutput = True)
 
 hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname)
