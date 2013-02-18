@@ -72,24 +72,24 @@ def divide_by_day(reference_date, ts, num_days, user_id = 'NA', toplot = False):
 
 	num_bins = (endtime - starttime).total_seconds() + 1
 
-	if toplot:
-		f, axarr = pylab.subplots(num_days, sharex=True)
+	# if toplot:
+	# 	f, axarr = pylab.subplots(num_days, sharex=True)
 
-	for axind, day in enumerate(ts_by_day):
-		if axind > num_days-1:
-			break
+	# for axind, day in enumerate(ts_by_day):
+	# 	if axind > num_days-1:
+	# 		break
 
-		binarized = binarize_timeseries(day, num_bins)
+	# 	binarized = binarize_timeseries(day, num_bins)
 
-		if toplot:
-			axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
-			axarr[axind].yaxis.set_visible(False)
+	# 	if toplot:
+	# 		axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
+	# 		axarr[axind].yaxis.set_visible(False)
 
-	if toplot:
-		pylab.locator_params(axis = 'x', nbins = 5)
-		pylab.xlabel('Time (each time tick corresponds to 1 s)')
-		pylab.savefig('raster-{}.pdf'.format(user_id))
+	# if toplot:
+	# 	pylab.locator_params(axis = 'x', nbins = 5)
+	# 	pylab.xlabel('Time (each time tick corresponds to 1 s)')
+	# 	pylab.savefig('raster-{}.pdf'.format(user_id))
 
-	pylab.show()
+	# pylab.show()
 
-	return ts_by_day
+	return ts_by_day, num_bins
