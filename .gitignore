@@ -4,3 +4,4 @@ timeseries
 timeseries_longterm
 *.dat
 *.pdf
+*.dat_inf*
