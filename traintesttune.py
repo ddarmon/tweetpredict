@@ -65,8 +65,8 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 
 # Use CSSR to generate the CSM files
 
-# fname = 'timeseries/twitter_ts-1800'
-fname = 'byday-600s-184274305'
+suffix = '14448173'
+fname = 'byday-600s-{}'.format(suffix)
 
 create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True)
 

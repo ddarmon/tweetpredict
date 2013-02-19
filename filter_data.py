@@ -1,100 +1,119 @@
-ofile = open('byday-600s-184274305-train.dat_inf.dot')
+suffix = '184274305'
+suffix = '14448173'
+
+fname = 'byday-600s-{}'.format(suffix)
+
+ofile = open('{0}-train.dat_results'.format(fname))
 
 CSM = {} # A dictionary structure for the CSM
 
-for i in range(6):
-	ofile.readline()
-
 line = ofile.readline()
 
-while line != '}':
-	state = int(line.split()[0]) # The state from the .dot file
-	up_prob = 1 - float(line.split()[6]) # The probability of transitioning from this state emitting a 1
-	CSM[state] = up_prob # populate the CSM
-	
+while line != '':
+	state = int(line.split()[2])
+
+	while 'distribution' not in line:
+		line = ofile.readline()
+
+	CSM[state] = float(line.split()[-1])
+
+	for ind in xrange(3):
+		ofile.readline()
+
 	line = ofile.readline()
 
 ofile.close()
 
-###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-## Start from *here*. 
-###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-CSM[-1] = 0 # If we are unsure about our state, just don't buy
-
 print CSM
 
-states = {} # A dictionary structure with the ordered pair
-			# (symbol sequence, state)
+def get_equivalence_classes(fname):
+	ofile = open('{0}.dat_results'.format(fname))
 
-# Populate states from CSM_states
+	# Start at state = 0, and then loop up to state = N, where 
+	# N is the number of states
 
-ofile2 = open('CSM_states')
+	state = 0
+	state_list = {}
 
-for line in ofile2:
-	symbol = line.split()[0]
-	state  = line.split()[1]
-	
-	states[symbol] = state
+	ofile.readline()
 
-ofile2.close()
+	line = ofile.readline()
+
+	# Warning: As of now, you need to make sure that you remove 
+	# any superfluous spaces in the .dat_results file
+
+	while line != '':
+		while line.split()[0] != 'distribution:':
+			state_list[line.rstrip()] = state
+			line = ofile.readline()
+		state = state + 1
+		for lineind in xrange(5):
+			ofile.readline()
+		line = ofile.readline()
+
+	ofile.close()
+
+	# Get out the history length used.
+
+	L = -1
+
+	for history in state_list:
+		L = max(L, len(history))
+
+	return state_list, L
+
+states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
+										# (symbol sequence, state)
 
 # Open the file containing the time series from the 
 # to-be-predicted time period
 
-ofile3 = open('DJIA_binary_1950_1969.dat')
+tunefile = open('{}-tune.dat'.format(fname))
 
-tmp = ofile3.readline().split()
+tunedays = [line.rstrip() for line in tunefile]
 
-ofile3.close()
+tunefile.close()
 
-# Make time_series one giant string that we can loop through
+for day in tunedays:
 
-time_series = ''
+	# We look at most L time steps into the past. We can
+	# synchronize on L - 1 timesteps, by virtue of how CSSR
+	# does its filtering.
 
-for symbol in tmp:
-	time_series = time_series + symbol
+	# Note: We'll start predicting *L-1* days in. So,
+	# our first prediction will be for day L.
 
-# predicted_time_series contains our guess for what the time
-# series will actually look like
+	prediction = ''
 
-predicted_time_series = ''
+	# We can predict on day L, since we have L - 1 days.
 
-# Since we can't possibly make any prediction for the first
-# three days (given L for our CSM), we mark those as -1
-# to indicate our inability to make a prediction
+	cur_state = states.get(day[0:L], 'M')
 
-predicted_time_series = predicted_time_series + '-1 -1 -1 '
+	if cur_state == 'M':
+		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(day[0:L])
 
-# We can predict the fourth day, since we know the three previous days
-
-if CSM[int(states[time_series[0:3]])] > 0.5:
-	predicted_time_series = predicted_time_series + '1 '
-else:
-	predicted_time_series = predicted_time_series + '0 '
-
-# From here on out, we have four days worth of information (using what)
-# //actually// happened. As such, we can just loop through the
-# time-series until the very end.
-
-num_symbols = len(tmp)
-
-for i in range(num_symbols - 4 + 1):
-	if CSM[int(states[time_series[i:i+4]])] > 0.5:
-		predicted_time_series = predicted_time_series + '1 '
+		prediction += 'M'
 	else:
-		predicted_time_series = predicted_time_series + '0 '
+		if CSM[int(cur_state)] > 0.5:
+			prediction += '1'
+		else:
+			prediction += '0'
 
-predicted_time_series = predicted_time_series.split()
+	for i in xrange(L, len(day)):
+		cur_state = states.get(day[i - L:i], 'M')
 
-hits = 0
-total = 0
+		if cur_state == 'M':
+			print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(day[i - L:i])
 
-for i in range(num_symbols):
-	if time_series[i] == predicted_time_series[i]:
-		hits = hits + 1
-	total = total + 1
-	
-	print time_series[i], predicted_time_series[i]
+			prediction += 'M'
+		else:
+			if CSM[int(cur_state)] > 0.5:
+				prediction += '1'
+			else:
+				prediction += '0'
 
-print float(hits) / float(total)
+	# Visually compare the prediction to the true timeseries
+
+	print 'True Timeseries / Predicted Timeseries\n'
+
+	print day[L-1:] + '\n' + prediction + '\n'
