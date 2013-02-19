@@ -1,5 +1,9 @@
-suffix = '184274305'
-suffix = '14448173'
+import ipdb
+
+# suffix = '184274305'
+# suffix = '14448173'
+suffix = '1712831'
+# suffix = 'FAKE'
 
 fname = 'byday-600s-{}'.format(suffix)
 
@@ -39,15 +43,13 @@ def get_equivalence_classes(fname):
 
 	line = ofile.readline()
 
-	# Warning: As of now, you need to make sure that you remove 
-	# any superfluous spaces in the .dat_results file
-
 	while line != '':
 		while line.split()[0] != 'distribution:':
 			state_list[line.rstrip()] = state
+			
 			line = ofile.readline()
 		state = state + 1
-		for lineind in xrange(5):
+		for lineind in xrange(4):
 			ofile.readline()
 		line = ofile.readline()
 
@@ -87,7 +89,7 @@ for day in tunedays:
 
 	# We can predict on day L, since we have L - 1 days.
 
-	cur_state = states.get(day[0:L], 'M')
+	cur_state = states.get(day[0:L-1], 'M')
 
 	if cur_state == 'M':
 		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(day[0:L])
@@ -116,4 +118,4 @@ for day in tunedays:
 
 	print 'True Timeseries / Predicted Timeseries\n'
 
-	print day[L-1:] + '\n' + prediction + '\n'
+	print day[L-1:] + '\n\n' + prediction + '\n'

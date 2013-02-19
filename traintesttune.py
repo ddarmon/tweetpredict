@@ -65,10 +65,13 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 
 # Use CSSR to generate the CSM files
 
-suffix = '14448173'
+# suffix = '184274305'
+# suffix = '14448173'
+suffix = '1712831'
+# suffix = 'FAKE'
 fname = 'byday-600s-{}'.format(suffix)
 
-create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True)
+create_traintunetest(fname = fname, ratios = (0.5, 0.3, 0.2), toprint = True)
 
 fname_to_CSSR = fname + '-train'
 
