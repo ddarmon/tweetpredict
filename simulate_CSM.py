@@ -18,13 +18,11 @@ class state:
 	def setEmit1State(self, state):
 		self.s_emit1 = state
 
-# def simulate(prefix, num_its = 100):
+suffixes = ['1712831', '16290327', '184274305', '196071730', '32451329', '178808746']
 
-suffixes = ['1712831', '16290327', '184274305']
-
-prefix = 'byday-1s-{}'.format(suffixes[1])
+prefix = 'byday-600s-{}'.format(suffixes[-1])
 # prefix = 'byday-1s-16290327'
-num_its = 60000
+num_its = 100
 fname = '{}.dat_inf.dot'.format(prefix)
 
 ofile = open(fname)
@@ -55,7 +53,7 @@ ofile.close()
 
 n_states = len(CSM)
 
-num_sims = 20
+num_sims = 50
 
 urand = numpy.random.rand(num_its, num_sims)
 

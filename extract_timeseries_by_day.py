@@ -40,6 +40,18 @@ def plot_raster(binarized, num_bins, axarr, axind):
     axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
     axarr[axind].yaxis.set_visible(False)
 
+def include_date(date):
+    if (date.month == 9) and (date.day == 7 or date.day == 8 or date.day == 20): # Dates in September to exclude
+        toinclude = False
+    elif (date.month == 10) and (date.day == 18):
+        toinclude = False
+    elif date > datetime.datetime(month = 11, day = 18, year = 2012, hour = 23):
+        toinclude = False
+    else:
+        toinclude = True
+
+    return toinclude
+
 # Setup of .csv file:
 #    "row_added_at","status_id","user_id","status_date","status_text","status_is_retweet","status_retweet_of","status_retweet_count","status_latitude","status_longitude"
 #
@@ -153,13 +165,19 @@ def export_ts(ts, user_id, num_bins, toplot = False, iresolution = None):
 
 iresolution = 60*10
 
-for user_rank in xrange(20):
+for user_rank in xrange(5):
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
     ts = user_dict[user_id]
 
     reference_date = ts[0]
 
-    ts_by_day, num_bins = divide_by_day(reference_date, ts, num_days = 20, user_id = user_id, toplot = True)
+    ts_by_day, days, num_bins = divide_by_day(reference_date, ts, num_days = 20, user_id = user_id, toplot = True)
 
-    export_ts(ts_by_day[1:30], user_id, toplot = True, num_bins = num_bins, iresolution = iresolution)
+    include_idxs = []
+
+    for idx, day in enumerate(days):
+        if include_date(day):
+            include_idxs.append(idx)
+
+    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, num_bins = num_bins, iresolution = iresolution)
