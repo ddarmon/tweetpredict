@@ -1,4 +1,6 @@
 import ipdb
+import cssr_interface
+import numpy
 
 def get_equivalence_classes(fname):
 	ofile = open('{0}.dat_results'.format(fname))
@@ -35,7 +37,7 @@ def get_equivalence_classes(fname):
 	return state_list, L
 
 def get_CSM(fname):
-	ofile = open('{0}-train.dat_results'.format(fname))
+	ofile = open('{0}.dat_results'.format(fname))
 
 	CSM = {} # A dictionary structure for the CSM
 
@@ -99,33 +101,72 @@ def CSM_filter(CSM, states, ts, L):
 # suffix = '184274305'
 # suffix = '14448173'
 # suffix = '1712831'
-# suffix = '196071730'
-suffix = 'FAKE'
+suffix = '196071730'
+# suffix = 'FAKE'
 
-fname = 'byday-600s-{}'.format(suffix)
+Ls = range(1, 11)
 
-CSM = get_CSM(fname = fname)
+correct_by_L = numpy.zeros(len(Ls))
 
-print CSM
+for L_ind, L_val in enumerate(Ls):
+	print 'Performing filter with L = {0}...\n\n'.format(L_val)
+	fname = 'byday-600s-{}'.format(suffix)
 
-states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
-										# (symbol sequence, state)
+	cssr_interface.run_CSSR(filename = fname + '-train', L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
-# Open the file containing the time series from the 
-# to-be-predicted time period
+	CSM = get_CSM(fname = '{}-train'.format(fname))
 
-tunefile = open('{}-tune.dat'.format(fname))
+	# print CSM
 
-tunedays = [line.rstrip() for line in tunefile]
+	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
+											# (symbol sequence, state)
 
-tunefile.close()
+	# Open the file containing the time series from the 
+	# to-be-predicted time period
 
-for day in tunedays:
+	tunefile = open('{}-tune.dat'.format(fname))
 
-	prediction = CSM_filter(CSM, states, ts = day, L = L)
+	tunedays = [line.rstrip() for line in tunefile]
 
-	# Visually compare the prediction to the true timeseries
+	tunefile.close()
 
-	print 'True Timeseries / Predicted Timeseries\n'
+	correct_rates = numpy.zeros(len(tunedays))
 
-	print day[L-1:] + '\n\n' + prediction + '\n'
+	for day_ind, day in enumerate(tunedays):
+
+		prediction = CSM_filter(CSM, states, ts = day, L = L)
+
+		# Visually compare the prediction to the true timeseries
+
+		print 'True Timeseries / Predicted Timeseries\n'
+
+		print day[L-1:] + '\n\n' + prediction + '\n'
+
+		ts_true = day[L-1:]
+		ts_prediction = prediction
+
+		correct = 0
+
+		for char_ind in xrange(len(ts_true)):
+			if ts_true[char_ind] == ts_prediction[char_ind]:
+				correct += 1
+
+		correct_rates[day_ind] = correct / float(len(ts_true))
+
+	correct_by_L[L_ind] = correct_rates.mean()
+
+print 'History Length\tCorrect Rate'
+
+for ind in range(len(Ls)):
+	print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
+
+ind_L_best = correct_by_L.argmax()
+L_best = int(Ls[ind_L_best])
+
+print 'The optimal L was {}.'.format(L_best)
+
+cssr_interface.run_CSSR(filename = fname + '-train', L = L_best, savefiles = True, showdot = True, is_multiline = True, showCSSRoutput = False)
+
+hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + '-train')
+
+print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
