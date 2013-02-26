@@ -98,11 +98,55 @@ def CSM_filter(CSM, states, ts, L):
 				prediction += '0'
 	return prediction
 
+def compute_metrics(ts_true, ts_prediction):
+	correct = 0
+
+	for char_ind in xrange(len(ts_true)):
+		if ts_true[char_ind] == ts_prediction[char_ind]:
+			correct += 1
+
+	accuracy_rate = correct / float(len(ts_true))
+
+	return accuracy_rate
+
+def run_tests(fname, CSM, states, L):
+	# NOTE: The filename should *already have* the suffix
+	# '-tune', '-test', etc.
+
+	datafile = open('{}.dat'.format(fname))
+
+	days = [line.rstrip() for line in datafile]
+
+	datafile.close()
+
+	correct_rates = numpy.zeros(len(days))
+
+	for day_ind, day in enumerate(days):
+
+		prediction = CSM_filter(CSM, states, ts = day, L = L)
+
+		# Visually compare the prediction to the true timeseries
+
+		print 'True Timeseries / Predicted Timeseries\n'
+
+		print day[L-1:] + '\n\n' + prediction + '\n'
+
+		ts_true = day[L-1:]
+		ts_prediction = prediction
+
+		# For a given L, compute the accuracy rate on the tuning set.
+		# That is, compute the proportion of the time series
+		# predicted correctly.
+
+		correct_rates[day_ind] = compute_metrics(ts_true, ts_prediction)
+
+	return correct_rates
+
 # suffix = '184274305'
 # suffix = '14448173'
 # suffix = '1712831'
-suffix = '196071730'
-# suffix = 'FAKE'
+# suffix = '196071730'
+suffix = 'FAKE'
 
 Ls = range(1, 11)
 
@@ -121,37 +165,7 @@ for L_ind, L_val in enumerate(Ls):
 	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 											# (symbol sequence, state)
 
-	# Open the file containing the time series from the 
-	# to-be-predicted time period
-
-	tunefile = open('{}-tune.dat'.format(fname))
-
-	tunedays = [line.rstrip() for line in tunefile]
-
-	tunefile.close()
-
-	correct_rates = numpy.zeros(len(tunedays))
-
-	for day_ind, day in enumerate(tunedays):
-
-		prediction = CSM_filter(CSM, states, ts = day, L = L)
-
-		# Visually compare the prediction to the true timeseries
-
-		print 'True Timeseries / Predicted Timeseries\n'
-
-		print day[L-1:] + '\n\n' + prediction + '\n'
-
-		ts_true = day[L-1:]
-		ts_prediction = prediction
-
-		correct = 0
-
-		for char_ind in xrange(len(ts_true)):
-			if ts_true[char_ind] == ts_prediction[char_ind]:
-				correct += 1
-
-		correct_rates[day_ind] = correct / float(len(ts_true))
+	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, L = L)
 
 	correct_by_L[L_ind] = correct_rates.mean()
 
@@ -170,3 +184,15 @@ cssr_interface.run_CSSR(filename = fname + '-train', L = L_best, savefiles = Tru
 hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + '-train')
 
 print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
+
+# Perform filter on the held out test set, using the CSM from 
+# the L chosen by the tuning set, and compute the performance.
+
+CSM = get_CSM(fname = '{}-train'.format(fname))
+
+states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
+													  # (symbol sequence, state)
+
+correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, L = L)
+
+print 'The accuracy rate on the held out test set is: {}'.format(numpy.mean(correct_rates))
