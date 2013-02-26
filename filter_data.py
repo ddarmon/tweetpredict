@@ -75,7 +75,7 @@ def CSM_filter(CSM, states, ts, L):
 	cur_state = states.get(ts[0:L-1], 'M')
 
 	if cur_state == 'M':
-		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[0:L])
+		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[0:L-1])
 
 		prediction += 'M'
 	else:
@@ -109,9 +109,16 @@ def compute_metrics(ts_true, ts_prediction):
 
 	return accuracy_rate
 
-def run_tests(fname, CSM, states, L):
+def run_tests(fname, CSM, states, L, L_max = None):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
+
+	# If a maximum L wasn't passed (i.e. we're not trying to 
+	# compare CSMs on the same timeseries data), assume that
+	# we want to use *all* of the timeseries in our test.
+
+	if L_max == None:
+		L_max = L
 
 	datafile = open('{}.dat'.format(fname))
 
@@ -131,8 +138,12 @@ def run_tests(fname, CSM, states, L):
 
 		print day[L-1:] + '\n\n' + prediction + '\n'
 
-		ts_true = day[L-1:]
-		ts_prediction = prediction
+		ts_true = day[L_max-1:]
+		ts_prediction = prediction[(L_max - L):] # This bit makes sure we predict
+												 # on the same amount of timeseries
+												 # regardless of L. Otherwise we 
+												 # might artificially inflate the
+												 # accuracy rate for large L CSMs.
 
 		# For a given L, compute the accuracy rate on the tuning set.
 		# That is, compute the proportion of the time series
@@ -142,13 +153,15 @@ def run_tests(fname, CSM, states, L):
 
 	return correct_rates
 
-# suffix = '184274305'
+suffix = '184274305'
 # suffix = '14448173'
 # suffix = '1712831'
 # suffix = '196071730'
-suffix = 'FAKE'
+# suffix = 'FAKE'
 
-Ls = range(1, 11)
+L_max = 12
+
+Ls = range(1, L_max)
 
 correct_by_L = numpy.zeros(len(Ls))
 
@@ -165,7 +178,7 @@ for L_ind, L_val in enumerate(Ls):
 	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 											# (symbol sequence, state)
 
-	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, L = L)
+	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, L = L, L_max = L_max)
 
 	correct_by_L[L_ind] = correct_rates.mean()
 
@@ -195,4 +208,4 @@ states, L = get_equivalence_classes(fname + '-train') # A dictionary structure w
 
 correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, L = L)
 
-print 'The accuracy rate on the held out test set is: {}'.format(numpy.mean(correct_rates))
+print 'The mean accuracy rate on the held out test set is: {}'.format(numpy.mean(correct_rates))
