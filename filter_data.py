@@ -98,18 +98,93 @@ def CSM_filter(CSM, states, ts, L):
 				prediction += '0'
 	return prediction
 
-def compute_metrics(ts_true, ts_prediction):
-	correct = 0
+def compute_precision(ts_true, ts_prediction):
+	numerator = 0    # In precision, the numerator is the number of true
+						 # positives which are predicted correctly.
+	denominator = 0	 # In precision, the denominator is the total number
+					 # of predicted positives.
 
 	for char_ind in xrange(len(ts_true)):
-		if ts_true[char_ind] == ts_prediction[char_ind]:
-			correct += 1
+		if ts_prediction[char_ind] == '1': # We predicted a 1
+			denominator += 1
 
-	accuracy_rate = correct / float(len(ts_true))
+			if ts_true[char_ind] == '1': # We predicted a 1, and it is also the right
+									   # answer.
+				numerator += 1
 
-	return accuracy_rate
+	if denominator == 0:
+		print 'Warning: you didn\'t predict any tweets! By convention, set precision to 1.'
 
-def run_tests(fname, CSM, states, L, L_max = None):
+		precision = 1
+	else:
+		precision = numerator/float(denominator)
+
+	return precision
+
+def compute_recall(ts_true, ts_prediction):
+	numerator = 0    # In precision, the numerator is the number of true
+						 # positives which are predicted correctly.
+	denominator = 0	 # In precision, the denominator is the total number
+					 # of true positives.
+
+	for char_ind in xrange(len(ts_true)):
+		if ts_true[char_ind] == '1': # The true value is a 1
+			denominator += 1
+
+			if ts_prediction[char_ind] == '1': # We predicted a 1, and it is also the right
+									   		 # answer.
+				numerator += 1
+
+	if denominator == 0:
+		print 'Warning: no tweets were in this day! By convention, set recall to 1.'
+
+		recall = 1
+	else:
+		recall = numerator/float(denominator)
+
+	return recall
+
+def compute_metrics(ts_true, ts_prediction, metric = None):
+	# choices: 'accuracy', 'precision', 'recall', 'F'
+
+	if metric == None or metric == 'accuracy': # By default, compute accurracy rate.
+		correct = 0
+
+		for char_ind in xrange(len(ts_true)):
+			if ts_true[char_ind] == ts_prediction[char_ind]:
+				correct += 1
+
+		accuracy_rate = correct / float(len(ts_true))
+
+		return accuracy_rate
+	elif metric == 'precision':
+		precision = compute_precision(ts_true, ts_prediction)
+
+		return precision
+
+	elif metric == 'recall':
+			
+		recall = compute_recall(ts_true, ts_prediction)
+
+		return recall
+
+	elif metric == 'F':
+		precision = compute_precision(ts_true, ts_prediction)
+		recall = compute_recall(ts_true, ts_prediction)
+
+		if (precision + recall) == 0:
+			F = 0
+		else:
+			F = 2*precision*recall/float(precision + recall)
+
+		return F
+
+	else:
+		print "Please choose one of \'accuracy\', \'precision\', \'recall\', or \'F\'."
+
+		return None
+
+def run_tests(fname, CSM, states, L, L_max = None, metric = None):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -145,23 +220,45 @@ def run_tests(fname, CSM, states, L, L_max = None):
 												 # might artificially inflate the
 												 # accuracy rate for large L CSMs.
 
-		# For a given L, compute the accuracy rate on the tuning set.
-		# That is, compute the proportion of the time series
-		# predicted correctly.
+		# For a given L, compute the metric rate on the tuning set.
+		# Allowed metrics are 'accuracy', 'precision', 'recall', 'F'.
 
-		correct_rates[day_ind] = compute_metrics(ts_true, ts_prediction)
+		correct_rates[day_ind] = compute_metrics(ts_true, ts_prediction, metric = metric)
 
 	return correct_rates
 
-suffix = '184274305'
+def get_top_K_users(K = 5):
+	ofile = open('user_lookup/tweet_counts_labeled.tsv')
+
+	ofile.readline()
+
+	users = []
+
+	for k in range(K):
+		line = ofile.readline().split('\t')
+
+		users.append(line[0])
+
+	ofile.close()
+
+	return users
+
+users = get_top_K_users(20)
+
+suffix = users[11]
+
+# suffix = '184274305'
 # suffix = '14448173'
 # suffix = '1712831'
 # suffix = '196071730'
+# suffix = '59697909'
 # suffix = 'FAKE'
 
 L_max = 12
 
-Ls = range(1, L_max)
+metric = 'accuracy'
+
+Ls = range(1,L_max)
 
 correct_by_L = numpy.zeros(len(Ls))
 
@@ -178,11 +275,11 @@ for L_ind, L_val in enumerate(Ls):
 	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 											# (symbol sequence, state)
 
-	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, L = L, L_max = L_max)
+	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, L = L, L_max = L_max, metric = metric)
 
 	correct_by_L[L_ind] = correct_rates.mean()
 
-print 'History Length\tCorrect Rate'
+print 'History Length\t{} Rate'.format(metric)
 
 for ind in range(len(Ls)):
 	print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
@@ -206,6 +303,6 @@ CSM = get_CSM(fname = '{}-train'.format(fname))
 states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 													  # (symbol sequence, state)
 
-correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, L = L)
+correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, L = L, metric = metric)
 
-print 'The mean accuracy rate on the held out test set is: {}'.format(numpy.mean(correct_rates))
+print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(correct_rates))

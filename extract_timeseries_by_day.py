@@ -163,9 +163,10 @@ def export_ts(ts, user_id, num_bins, toplot = False, iresolution = None):
 
     ofile.close()
 
-iresolution = 60*10
+# iresolution = 60*10
+iresolution = None
 
-for user_rank in xrange(20, 40):
+for user_rank in xrange(0, 20):
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
     ts = user_dict[user_id]

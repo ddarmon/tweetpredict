@@ -68,7 +68,8 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 # suffix = '184274305'
 # suffix = '14448173'
 # suffix = '1712831'
-suffix = '196071730'
+# suffix = '196071730'
+suffix = '59697909'
 # suffix = 'FAKE'
 fname = 'byday-600s-{}'.format(suffix)
 
