@@ -63,29 +63,50 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 
 	testfile.close()
 
+def get_top_K_users(K = 5):
+	ofile = open('user_lookup/tweet_counts_labeled.tsv')
+
+	ofile.readline()
+
+	users = []
+
+	for k in range(K):
+		line = ofile.readline().split('\t')
+
+		users.append(line[0])
+
+	ofile.close()
+
+	return users
+
 # Use CSSR to generate the CSM files
 
-# suffix = '184274305'
-# suffix = '14448173'
-# suffix = '1712831'
-# suffix = '196071730'
-suffix = '59697909'
-# suffix = 'FAKE'
-fname = 'byday-600s-{}'.format(suffix)
+users = get_top_K_users(20)
 
-create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True)
+for user in users:
+	suffix = user
 
-fname_to_CSSR = fname + '-train'
+	# suffix = '184274305'
+	# suffix = '14448173'
+	# suffix = '1712831'
+	# suffix = '196071730'
+	# suffix = '59697909'
+	# suffix = 'FAKE'
+	fname = 'byday-600s-{}'.format(suffix)
 
-if len(sys.argv) > 1:
-	historyLength = sys.argv[1]
-else:
-	historyLength = 2
+	create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True)
 
-is_multiline = True
+	# fname_to_CSSR = fname + '-train'
 
-cssr_interface.run_CSSR(filename = fname_to_CSSR, L = historyLength, savefiles = True, showdot = True, is_multiline = is_multiline, showCSSRoutput = False)
+	# if len(sys.argv) > 1:
+	# 	historyLength = sys.argv[1]
+	# else:
+	# 	historyLength = 2
 
-hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname_to_CSSR)
+	# is_multiline = True
 
-print 'C_mu: {0}\nh_mu: {1}\nNumber of States: {2}'.format(Cmu, hmu, num_states)
+	# cssr_interface.run_CSSR(filename = fname_to_CSSR, L = historyLength, savefiles = True, showdot = True, is_multiline = is_multiline, showCSSRoutput = False)
+
+	# hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname_to_CSSR)
+
+	# print 'C_mu: {0}\nh_mu: {1}\nNumber of States: {2}'.format(Cmu, hmu, num_states)

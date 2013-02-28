@@ -245,7 +245,7 @@ def get_top_K_users(K = 5):
 
 users = get_top_K_users(20)
 
-suffix = users[11]
+suffix = users[15]
 
 # suffix = '184274305'
 # suffix = '14448173'
@@ -306,3 +306,7 @@ states, L = get_equivalence_classes(fname + '-train') # A dictionary structure w
 correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, L = L, metric = metric)
 
 print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(correct_rates))
+
+import os
+
+os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
