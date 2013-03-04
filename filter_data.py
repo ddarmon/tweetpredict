@@ -1,6 +1,22 @@
 import ipdb
 import cssr_interface
 import numpy
+import collections
+import sys
+
+class state:
+	def __init__(self, p_emit0 = None, s_emit0 = None, s_emit1 = None):
+		self.p_emit0 = p_emit0
+		self.s_emit0 = s_emit0
+		self.s_emit1 = s_emit1
+	
+	
+	def setEmit0State(self, state, prob):
+		self.s_emit0 = state
+		self.p_emit0 = prob
+	
+	def setEmit1State(self, state):
+		self.s_emit1 = state
 
 def get_equivalence_classes(fname):
 	ofile = open('{0}.dat_results'.format(fname))
@@ -89,7 +105,7 @@ def get_epsilon_machine(fname):
 
 	return epsilon_machine
 
-def CSM_filter(CSM, states, ts, L):
+def CSM_filter(CSM, states, epsilon_machine, ts, L):
 	# We look at most L time steps into the past. We can
 	# synchronize on L - 1 timesteps, by virtue of how CSSR
 	# does its filtering.
@@ -99,9 +115,18 @@ def CSM_filter(CSM, states, ts, L):
 
 	prediction = ''
 
+	state_series = ''
+
 	# We can predict on day L, since we have L - 1 days.
 
-	cur_state = states.get(ts[0:L-1], 'M')
+	cur_state = str(states.get(ts[0:L-1], 'M'))
+
+	state_series += cur_state
+
+	synchronized = False # Whether or not we've synchronized to the current state.
+						 # Basically, can we tell what state we're in yet.
+
+	# WE MIGHT HAVE TO REPEAT THIS MULTIPLE TIMES!!!
 
 	if cur_state == 'M':
 		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[0:L-1])
@@ -113,18 +138,61 @@ def CSM_filter(CSM, states, ts, L):
 		else:
 			prediction += '0'
 
+		synchronized = True
+
 	for i in xrange(L, len(ts)):
-		cur_state = states.get(ts[i - L:i], 'M')
+		# Now that we've synchronized, we get the new state
+		# by looking at the transition that *must* have
+		# occurred, given our epsilon machine.
 
-		if cur_state == 'M':
-			print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
+		if synchronized:
+			if ts[i-1] == '1':
+				cur_state = epsilon_machine[str(cur_state)].s_emit1
+			elif ts[i-1] == '0':
+				cur_state = epsilon_machine[str(cur_state)].s_emit0
 
-			prediction += 'M'
+			if cur_state == None:
+				# We have made a transition that isn't allowed by the epsilon
+				# machine, so we need to resync.
+
+				synchronized = False
+
+				cur_state = states.get(ts[i - L:i], 'M')
+
+				if cur_state == 'M':
+					print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
+
+					prediction += 'M'
+				else:
+					if CSM[int(cur_state)] > 0.5:
+						prediction += '1'
+					else:
+						prediction += '0'
+
+					synchronized = True
+			else: # We haven't made a disallowed transition, so we can update like usual.
+				if CSM[int(cur_state)] > 0.5:
+					prediction += '1'
+				else:
+					prediction += '0'
+
+			state_series += ';{}'.format(str(cur_state))
 		else:
-			if CSM[int(cur_state)] > 0.5:
-				prediction += '1'
+			cur_state = states.get(ts[i - L:i], 'M')
+
+			if cur_state == 'M':
+				print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
+
+				prediction += 'M'
 			else:
-				prediction += '0'
+				if CSM[int(cur_state)] > 0.5:
+					prediction += '1'
+				else:
+					prediction += '0'
+
+				synchronized = True
+
+	print state_series
 	return prediction
 
 def compute_precision(ts_true, ts_prediction):
@@ -213,7 +281,7 @@ def compute_metrics(ts_true, ts_prediction, metric = None):
 
 		return None
 
-def run_tests(fname, CSM, states, L, L_max = None, metric = None):
+def run_tests(fname, CSM, states, epsilon_machine, L, L_max = None, metric = None):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -234,7 +302,7 @@ def run_tests(fname, CSM, states, L, L_max = None, metric = None):
 
 	for day_ind, day in enumerate(days):
 
-		prediction = CSM_filter(CSM, states, ts = day, L = L)
+		prediction = CSM_filter(CSM, states, epsilon_machine, ts = day, L = L)
 
 		# Visually compare the prediction to the true timeseries
 
@@ -274,20 +342,19 @@ def get_top_K_users(K = 5):
 
 users = get_top_K_users(20)
 
-suffix = users[0]
+if len(sys.argv) < 2:
+	user_num = 4
+else:
+	user_num = int(sys.argv[1])
 
-# suffix = '184274305'
-# suffix = '14448173'
-# suffix = '1712831'
-# suffix = '196071730'
-# suffix = '59697909'
+suffix = users[user_num]
 # suffix = 'FAKE'
 
-L_max = 12
+L_max = 11
 
 metrics = ['accuracy', 'precision', 'recall', 'F']
 
-metric = metrics[1]
+metric = metrics[0]
 
 Ls = range(1,L_max)
 
@@ -301,12 +368,14 @@ for L_ind, L_val in enumerate(Ls):
 
 	CSM = get_CSM(fname = '{}-train'.format(fname))
 
+	epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
+
 	# print CSM
 
 	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 											# (symbol sequence, state)
 
-	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, L = L, L_max = L_max, metric = metric)
+	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric)
 
 	correct_by_L[L_ind] = correct_rates.mean()
 
@@ -336,10 +405,11 @@ epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
 states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 													  # (symbol sequence, state)
 
-correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, L = L, metric = metric)
+correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric)
 
 print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(correct_rates))
 
 import os
 
 os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
+# os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
