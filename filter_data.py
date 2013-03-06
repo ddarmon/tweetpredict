@@ -195,6 +195,18 @@ def CSM_filter(CSM, states, epsilon_machine, ts, L):
 	print state_series
 	return prediction
 
+def zero_filter(majority_class, ts):
+	# We return a prediction that is all the majority
+	# class. Thus, if the user usually tweeted,
+	# we'll always predict tweeting and vice versa.
+
+	prediction = ''
+
+	for ind in xrange(len(ts)):
+		prediction += str(majority_class)
+
+	return prediction
+
 def compute_precision(ts_true, ts_prediction):
 	numerator = 0    # In precision, the numerator is the number of true
 						 # positives which are predicted correctly.
@@ -220,7 +232,7 @@ def compute_precision(ts_true, ts_prediction):
 
 def compute_recall(ts_true, ts_prediction):
 	numerator = 0    # In precision, the numerator is the number of true
-						 # positives which are predicted correctly.
+					 # positives which are predicted correctly.
 	denominator = 0	 # In precision, the denominator is the total number
 					 # of true positives.
 
@@ -244,7 +256,7 @@ def compute_recall(ts_true, ts_prediction):
 def compute_metrics(ts_true, ts_prediction, metric = None):
 	# choices: 'accuracy', 'precision', 'recall', 'F'
 
-	if metric == None or metric == 'accuracy': # By default, compute accurracy rate.
+	if metric == None or metric == 'accuracy': # By default, compute accuracy rate.
 		correct = 0
 
 		for char_ind in xrange(len(ts_true)):
@@ -281,7 +293,7 @@ def compute_metrics(ts_true, ts_prediction, metric = None):
 
 		return None
 
-def run_tests(fname, CSM, states, epsilon_machine, L, L_max = None, metric = None):
+def run_tests(fname, CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM'):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -302,20 +314,25 @@ def run_tests(fname, CSM, states, epsilon_machine, L, L_max = None, metric = Non
 
 	for day_ind, day in enumerate(days):
 
-		prediction = CSM_filter(CSM, states, epsilon_machine, ts = day, L = L)
+		if type == 'CSM':
+			prediction = CSM_filter(CSM, states, epsilon_machine, ts = day, L = L)
 
-		# Visually compare the prediction to the true timeseries
+			# Visually compare the prediction to the true timeseries
 
-		print 'True Timeseries / Predicted Timeseries\n'
+			print 'True Timeseries / Predicted Timeseries\n'
 
-		print day[L-1:] + '\n\n' + prediction + '\n'
+			print day[L-1:] + '\n\n' + prediction + '\n'
 
+		else:
+			prediction = zero_filter(CSM, ts = day)
+		
 		ts_true = day[L_max-1:]
 		ts_prediction = prediction[(L_max - L):] # This bit makes sure we predict
 												 # on the same amount of timeseries
 												 # regardless of L. Otherwise we 
 												 # might artificially inflate the
-												 # accuracy rate for large L CSMs.
+												 # accuracy rate for large L CSMs.		
+		
 
 		# For a given L, compute the metric rate on the tuning set.
 		# Allowed metrics are 'accuracy', 'precision', 'recall', 'F'.
@@ -340,12 +357,42 @@ def get_top_K_users(K = 5):
 
 	return users
 
+def get_tweet_rate(fname):
+	days = [line.rstrip('\n') for line in open(fname + '.dat')]
+
+	tot_symbols = 0 # The total number of symbols.
+
+	num_ones = 0 # The number of 1s in the timeseries.
+
+	for day in days:
+		for symbol in day:
+			tot_symbols += 1
+			if symbol == '1':
+				num_ones += 1
+
+	return num_ones / float(tot_symbols)
+
+def generate_zero_order_CSM(fname):
+	# Takes in a multiline file, and returns the 
+	# 'majority class' from the timeseries. So
+	# if a person mostly tweets, we return 1.
+	# Otherwise, we return 0.
+
+	tweet_rate = get_tweet_rate(fname)
+
+	if tweet_rate > 0.5:
+		return 1
+	else:
+		return 0
+
 users = get_top_K_users(20)
 
 if len(sys.argv) < 2:
 	user_num = 4
+	metric_num = 0
 else:
 	user_num = int(sys.argv[1])
+	metric_num = int(sys.argv[2])
 
 suffix = users[user_num]
 # suffix = 'FAKE'
@@ -354,15 +401,24 @@ L_max = 11
 
 metrics = ['accuracy', 'precision', 'recall', 'F']
 
-metric = metrics[0]
+metric = metrics[metric_num]
 
 Ls = range(1,L_max)
 
 correct_by_L = numpy.zeros(len(Ls))
 
+fname = 'byday-600s-{}'.format(suffix)
+
+# Get a 'zero-order' CSM that predicts as a 
+# biased coin. That is, if in the training 
+# set the user mostly tweets, always
+# predict tweeting. Otherwise, always
+# predict not-tweeting.
+
+zero_order_predict = generate_zero_order_CSM(fname + '-train')
+
 for L_ind, L_val in enumerate(Ls):
 	print 'Performing filter with L = {0}...\n\n'.format(L_val)
-	fname = 'byday-600s-{}'.format(suffix)
 
 	cssr_interface.run_CSSR(filename = fname + '-train', L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
@@ -408,6 +464,12 @@ states, L = get_equivalence_classes(fname + '-train') # A dictionary structure w
 correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric)
 
 print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(correct_rates))
+
+# Get the accuracy rate using the zero-order CSM.
+
+zero_order_rate = biased_coin = run_tests(fname = fname + '-test', CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, type = 'zero')
+
+print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
 
 import os
 
