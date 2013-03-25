@@ -387,124 +387,91 @@ def generate_zero_order_CSM(fname):
 
 users = get_top_K_users(40)
 
-# if len(sys.argv) < 2:
-# 	user_num = 0
-# 	metric_num = 0
-# else:
-# 	user_num = int(sys.argv[1])
-# 	metric_num = int(sys.argv[2])
+if len(sys.argv) < 2:
+	user_num = 0
+	metric_num = 0
+else:
+	user_num = int(sys.argv[1])
+	metric_num = int(sys.argv[2])
 
-metric_num = 0
+suffix = users[user_num]
+# suffix = 'FAKE'
 
-Lopts = numpy.zeros(len(users))
+L_max = 11
 
-Cmus  = numpy.zeros(len(users))
+metrics = ['accuracy', 'precision', 'recall', 'F']
 
-n_states = numpy.zeros(len(users))
+metric = metrics[metric_num]
 
-cm_rates = numpy.zeros(len(users))
+Ls = range(1,L_max)
 
-baseline_rates = numpy.zeros(len(users))
+correct_by_L = numpy.zeros(len(Ls))
 
-for index, user_num in enumerate(range(len(users))):
-	suffix = users[user_num]
-	# suffix = 'FAKE'
+fname = 'byday-600s-{}'.format(suffix)
 
-	L_max = 11
+# Get a 'zero-order' CSM that predicts as a 
+# biased coin. That is, if in the training 
+# set the user mostly tweets, always
+# predict tweeting. Otherwise, always
+# predict not-tweeting.
 
-	metrics = ['accuracy', 'precision', 'recall', 'F']
+zero_order_predict = generate_zero_order_CSM(fname + '-train')
 
-	metric = metrics[metric_num]
+for L_ind, L_val in enumerate(Ls):
+	print 'Performing filter with L = {0}...\n\n'.format(L_val)
 
-	Ls = range(1,L_max)
-
-	correct_by_L = numpy.zeros(len(Ls))
-
-	fname = 'byday-600s-{}'.format(suffix)
-
-	# Get a 'zero-order' CSM that predicts as a 
-	# biased coin. That is, if in the training 
-	# set the user mostly tweets, always
-	# predict tweeting. Otherwise, always
-	# predict not-tweeting.
-
-	zero_order_predict = generate_zero_order_CSM(fname + '-train')
-
-	for L_ind, L_val in enumerate(Ls):
-		print 'Performing filter with L = {0}...\n\n'.format(L_val)
-
-		cssr_interface.run_CSSR(filename = fname + '-train', L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
-
-		CSM = get_CSM(fname = '{}-train'.format(fname))
-
-		epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
-
-		# print CSM
-
-		states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
-												# (symbol sequence, state)
-
-		correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric)
-
-		correct_by_L[L_ind] = correct_rates.mean()
-
-	print 'History Length\t{} Rate'.format(metric)
-
-	for ind in range(len(Ls)):
-		print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
-
-	ind_L_best = correct_by_L.argmax()
-	L_best = int(Ls[ind_L_best])
-
-	print 'The optimal L was {}.'.format(L_best)
-
-	Lopts[index] = L_best
-
-	cssr_interface.run_CSSR(filename = fname + '-train', L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
-
-	hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + '-train')
-
-	Cmus[index] = Cmu
-
-	n_states[index] = num_states
-
-	print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
-
-	# Perform filter on the held out test set, using the CSM from 
-	# the L chosen by the tuning set, and compute the performance.
+	cssr_interface.run_CSSR(filename = fname + '-train', L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
 	CSM = get_CSM(fname = '{}-train'.format(fname))
 
 	epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
 
+	# print CSM
+
 	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
-														  # (symbol sequence, state)
+											# (symbol sequence, state)
 
-	test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric)
+	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric)
 
-	print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
+	correct_by_L[L_ind] = correct_rates.mean()
 
-	cm_rates[index] = test_correct_rates.mean()
+print 'History Length\t{} Rate'.format(metric)
 
-	# Get the accuracy rate using the zero-order CSM.
+for ind in range(len(Ls)):
+	print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
 
-	zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, type = 'zero')
+ind_L_best = correct_by_L.argmax()
+L_best = int(Ls[ind_L_best])
 
-	baseline_rates[index] = zero_order_rate.mean()
+print 'The optimal L was {}.'.format(L_best)
 
-	print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
+cssr_interface.run_CSSR(filename = fname + '-train', L = L_best, savefiles = True, showdot = True, is_multiline = True, showCSSRoutput = False)
 
-	import os
+hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + '-train')
 
-	# os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
-	# os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
+print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
 
-print 'Ranking\tBaseline Rate\tCM Rate'
+# Perform filter on the held out test set, using the CSM from 
+# the L chosen by the tuning set, and compute the performance.
 
-for index in range(len(cm_rates)):
-	print '{}\t{}\t{}'.format(index, baseline_rates[index], cm_rates[index])
+CSM = get_CSM(fname = '{}-train'.format(fname))
 
-print 'Ranking\tLopt\tNumber of States\tCmu'
+epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
 
-for index in range(len(cm_rates)):
-	print '{}\t{}\t{}\t\t{}'.format(index, Lopts[index], n_states[index], Cmus[index])
+states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
+													  # (symbol sequence, state)
+
+test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric)
+
+print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
+
+# Get the accuracy rate using the zero-order CSM.
+
+zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, type = 'zero')
+
+print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
+
+import os
+
+# os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
+os.system('open rasters/raster-600s-{}.pdf'.format(suffix))

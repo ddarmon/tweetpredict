@@ -81,7 +81,7 @@ def get_top_K_users(K = 5):
 
 # Use CSSR to generate the CSM files
 
-users = get_top_K_users(20)
+users = get_top_K_users(40)
 
 for user in users:
 	suffix = user
