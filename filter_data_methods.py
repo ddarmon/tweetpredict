@@ -105,7 +105,7 @@ def get_epsilon_machine(fname):
 
 	return epsilon_machine
 
-def CSM_filter(CSM, states, epsilon_machine, ts, L):
+def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 	# We look at most L time steps into the past. We can
 	# synchronize on L - 1 timesteps, by virtue of how CSSR
 	# does its filtering.
@@ -131,7 +131,10 @@ def CSM_filter(CSM, states, epsilon_machine, ts, L):
 	if cur_state == 'M':
 		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[0:L-1])
 
-		prediction += 'M'
+
+		prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
+										  # based on the most common symbol
+		# prediction += 'M'
 	else:
 		if CSM[int(cur_state)] > 0.5:
 			prediction += '1'
@@ -162,7 +165,10 @@ def CSM_filter(CSM, states, epsilon_machine, ts, L):
 				if cur_state == 'M':
 					print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
 
-					prediction += 'M'
+					prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
+										  			  # based on the most common symbol
+
+					# prediction += 'M'
 				else:
 					if CSM[int(cur_state)] > 0.5:
 						prediction += '1'
@@ -183,7 +189,9 @@ def CSM_filter(CSM, states, epsilon_machine, ts, L):
 			if cur_state == 'M':
 				print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
 
-				prediction += 'M'
+				prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
+												  # based on the most common symbol
+				# prediction += 'M'
 			else:
 				if CSM[int(cur_state)] > 0.5:
 					prediction += '1'
@@ -293,7 +301,7 @@ def compute_metrics(ts_true, ts_prediction, metric = None):
 
 		return None
 
-def run_tests(fname, CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM'):
+def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM'):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -315,7 +323,7 @@ def run_tests(fname, CSM, states, epsilon_machine, L, L_max = None, metric = Non
 	for day_ind, day in enumerate(days):
 
 		if type == 'CSM':
-			prediction = CSM_filter(CSM, states, epsilon_machine, ts = day, L = L)
+			prediction = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts = day, L = L)
 
 			# Visually compare the prediction to the true timeseries
 
@@ -384,127 +392,3 @@ def generate_zero_order_CSM(fname):
 		return 1
 	else:
 		return 0
-
-users = get_top_K_users(40)
-
-# if len(sys.argv) < 2:
-# 	user_num = 0
-# 	metric_num = 0
-# else:
-# 	user_num = int(sys.argv[1])
-# 	metric_num = int(sys.argv[2])
-
-metric_num = 0
-
-Lopts = numpy.zeros(len(users))
-
-Cmus  = numpy.zeros(len(users))
-
-n_states = numpy.zeros(len(users))
-
-cm_rates = numpy.zeros(len(users))
-
-baseline_rates = numpy.zeros(len(users))
-
-for index, user_num in enumerate(range(len(users))):
-	suffix = users[user_num]
-	# suffix = 'FAKE'
-
-	L_max = 11
-
-	metrics = ['accuracy', 'precision', 'recall', 'F']
-
-	metric = metrics[metric_num]
-
-	Ls = range(1,L_max)
-
-	correct_by_L = numpy.zeros(len(Ls))
-
-	fname = 'timeseries/byday-600s-{}'.format(suffix)
-
-	# Get a 'zero-order' CSM that predicts as a 
-	# biased coin. That is, if in the training 
-	# set the user mostly tweets, always
-	# predict tweeting. Otherwise, always
-	# predict not-tweeting.
-
-	zero_order_predict = generate_zero_order_CSM(fname + '-train')
-
-	for L_ind, L_val in enumerate(Ls):
-		print 'Performing filter with L = {0}...\n\n'.format(L_val)
-
-		cssr_interface.run_CSSR(filename = fname + '-train', L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
-
-		CSM = get_CSM(fname = '{}-train'.format(fname))
-
-		epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
-
-		# print CSM
-
-		states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
-												# (symbol sequence, state)
-
-		correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric)
-
-		correct_by_L[L_ind] = correct_rates.mean()
-
-	print 'History Length\t{} Rate'.format(metric)
-
-	for ind in range(len(Ls)):
-		print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
-
-	ind_L_best = correct_by_L.argmax()
-	L_best = int(Ls[ind_L_best])
-
-	print 'The optimal L was {}.'.format(L_best)
-
-	Lopts[index] = L_best
-
-	cssr_interface.run_CSSR(filename = fname + '-train', L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
-
-	hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + '-train')
-
-	Cmus[index] = Cmu
-
-	n_states[index] = num_states
-
-	print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
-
-	# Perform filter on the held out test set, using the CSM from 
-	# the L chosen by the tuning set, and compute the performance.
-
-	CSM = get_CSM(fname = '{}-train'.format(fname))
-
-	epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
-
-	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
-														  # (symbol sequence, state)
-
-	test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric)
-
-	print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
-
-	cm_rates[index] = test_correct_rates.mean()
-
-	# Get the accuracy rate using the zero-order CSM.
-
-	zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, type = 'zero')
-
-	baseline_rates[index] = zero_order_rate.mean()
-
-	print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
-
-	import os
-
-	# os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
-	# os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
-
-print 'Ranking\tBaseline Rate\tCM Rate'
-
-for index in range(len(cm_rates)):
-	print '{}\t{}\t{}'.format(index, baseline_rates[index], cm_rates[index])
-
-print 'Ranking\tLopt\tNumber of States\tCmu'
-
-for index in range(len(cm_rates)):
-	print '{}\t{}\t{}\t\t{}'.format(index, Lopts[index], n_states[index], Cmus[index])
