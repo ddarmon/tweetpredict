@@ -365,6 +365,25 @@ def get_top_K_users(K = 5):
 
 	return users
 
+def get_K_users(K = 5, start = 0):
+	ofile = open('user_lookup/tweet_counts_labeled.tsv')
+
+	ofile.readline()
+
+	users = []
+
+	for tmp in xrange(start): # Skip over the first start users
+		ofile.readline()
+
+	for k in xrange(K):
+		line = ofile.readline().split('\t')
+
+		users.append(line[0])
+
+	ofile.close()
+
+	return users
+
 def get_tweet_rate(fname):
 	days = [line.rstrip('\n') for line in open(fname + '.dat')]
 

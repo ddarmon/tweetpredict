@@ -6,14 +6,12 @@ import sys
 
 from filter_data_methods import *
 
-users = get_top_K_users(21)
+rank_start = 0 # The ith most highly tweeting user, where we start
+                # counting at 0.
 
-# if len(sys.argv) < 2:
-#   user_num = 0
-#   metric_num = 0
-# else:
-#   user_num = int(sys.argv[1])
-#   metric_num = int(sys.argv[2])
+K = 40
+
+users = get_K_users(K = K, start = rank_start)
 
 metric_num = 0
 
@@ -123,14 +121,25 @@ for index, user_num in enumerate(range(len(users))):
 print 'Ranking\tBaseline Rate\tCM Rate'
 
 for index in range(len(cm_rates)):
-    print '{}\t{}\t{}'.format(index, baseline_rates[index], cm_rates[index])
+    print '{}\t{}\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index])
 
 print 'Ranking\tLopt\tNumber of States\tCmu'
 
 for index in range(len(cm_rates)):
-    print '{}\t{}\t{}\t\t{}'.format(index, Lopts[index], n_states[index], Cmus[index])
+    print '{}\t{}\t{}\t\t{}'.format(index + rank_start, Lopts[index], n_states[index], Cmus[index])
 
 print 'Ranking\tBaseline Rate\tCM Rate\t\tNumber of States'
 
 for index in range(len(cm_rates)):
-    print '{}\t{:.3}\t\t{:.3}\t\t{}'.format(index, baseline_rates[index], cm_rates[index], n_states[index])
+    print '{}\t{:.3}\t\t{:.3}\t\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index])
+
+# Print the results to a file for further analysis.
+
+ofile = open('filtering_results.tsv', 'w')
+
+ofile.write('Ranking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\tLopt\n')
+
+for index in range(len(cm_rates)):
+    ofile.write('{}\t{:.3}\t{:.3}\t{}\t{}\t{}\n'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], Lopts[index]))
+
+ofile.close()
