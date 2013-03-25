@@ -94,7 +94,7 @@ for user in users:
 	# suffix = 'FAKE'
 	fname = 'byday-600s-{}'.format(suffix)
 
-	create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True)
+	create_traintunetest(fname = 'timeseries' + fname, ratios = (0.8, 0.1, 0.1), toprint = True)
 
 	# fname_to_CSSR = fname + '-train'
 

@@ -125,9 +125,9 @@ from dividebyday import divide_by_day, binarize_timeseries
 
 def export_ts(ts, user_id, num_bins, toplot = False, iresolution = None):
     if iresolution != None:
-        ofile = open('byday-{0}s-{1}.dat'.format(iresolution, user_id), 'w')
+        ofile = open('timeseries/byday-{0}s-{1}.dat'.format(iresolution, user_id), 'w')
     else:
-        ofile = open('byday-1s-{0}.dat'.format(user_id), 'w')
+        ofile = open('timeseries/byday-1s-{0}.dat'.format(user_id), 'w')
 
     f, axarr = pylab.subplots(len(ts), sharex = True)
 

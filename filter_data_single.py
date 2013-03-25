@@ -407,7 +407,7 @@ Ls = range(1,L_max)
 
 correct_by_L = numpy.zeros(len(Ls))
 
-fname = 'byday-600s-{}'.format(suffix)
+fname = 'timeseries/byday-600s-{}'.format(suffix)
 
 # Get a 'zero-order' CSM that predicts as a 
 # biased coin. That is, if in the training 
