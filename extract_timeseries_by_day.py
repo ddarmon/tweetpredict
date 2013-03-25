@@ -4,6 +4,8 @@ import pylab
 import datetime
 import random
 
+from dividebyday import divide_by_day, binarize_timeseries
+
 def parsedate(datestring):
     part1, part2 = datestring.split(' ')
     
@@ -51,6 +53,54 @@ def include_date(date):
         toinclude = True
 
     return toinclude
+
+def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolution = None):
+    if iresolution != None:
+        ofile = open('timeseries/byday-{0}s-{1}.dat'.format(iresolution, user_id), 'w')
+    else:
+        ofile = open('timeseries/byday-1s-{0}.dat'.format(user_id), 'w')
+
+    if toplot == True or saveplot == True:
+        f, axarr = pylab.subplots(len(ts), sharex = True)
+
+    if iresolution != None:
+        num_bins_coarse = num_bins / iresolution # Account for the fact that we plan to coarsen the timeseries
+
+    for axind, day in enumerate(ts):
+        binarized = binarize_timeseries(day, num_bins)
+
+        if iresolution != None:
+            binarized = coarse_resolution(binarized, iresolution = iresolution)
+
+            if toplot == True or saveplot == True:
+                plot_raster(binarized, num_bins_coarse, axarr, axind)
+        else:
+            if toplot == True or saveplot == True:
+                plot_raster(binarized, num_bins, axarr, axind)
+
+        for symbol in binarized:
+            ofile.write("{0}".format(int(symbol)))
+
+        ofile.write("\n")
+
+    if toplot == True or saveplot == True:
+        if iresolution == None:
+            pylab.xlabel('Time (each time tick corresponds to 1 s)')
+        else:
+            pylab.xlabel('Time (each time tick corresponds to {} s)'.format(iresolution))
+
+        pylab.locator_params(axis = 'x', nbins = 5)
+
+    if saveplot == True:
+        if iresolution == None:
+            pylab.savefig('raster-1s-{0}.pdf'.format(user_id))
+        else:
+            pylab.savefig('raster-{0}s-{1}.pdf'.format(iresolution, user_id))
+    
+    if toplot == True:
+        pylab.show()
+
+    ofile.close()
 
 # Setup of .csv file:
 #    "row_added_at","status_id","user_id","status_date","status_text","status_is_retweet","status_retweet_of","status_retweet_count","status_latitude","status_longitude"
@@ -121,59 +171,18 @@ time_all_tweets.sort() # Sorts the times of the tweets from oldest to newest
 
 reference_date = time_all_tweets[0]
 
-from dividebyday import divide_by_day, binarize_timeseries
-
-def export_ts(ts, user_id, num_bins, toplot = False, iresolution = None):
-    if iresolution != None:
-        ofile = open('timeseries/byday-{0}s-{1}.dat'.format(iresolution, user_id), 'w')
-    else:
-        ofile = open('timeseries/byday-1s-{0}.dat'.format(user_id), 'w')
-
-    f, axarr = pylab.subplots(len(ts), sharex = True)
-
-    if iresolution != None:
-        num_bins_coarse = num_bins / iresolution # Account for the fact that we plan to coarsen the timeseries
-
-    for axind, day in enumerate(ts):
-        binarized = binarize_timeseries(day, num_bins)
-
-        if iresolution != None:
-            binarized = coarse_resolution(binarized, iresolution = iresolution)
-
-            plot_raster(binarized, num_bins_coarse, axarr, axind)
-        else:
-            plot_raster(binarized, num_bins, axarr, axind)
-
-        for symbol in binarized:
-            ofile.write("{0}".format(int(symbol)))
-
-        ofile.write("\n")
-
-    if iresolution == None:
-        pylab.xlabel('Time (each time tick corresponds to 1 s)')
-    else:
-        pylab.xlabel('Time (each time tick corresponds to {} s)'.format(iresolution))
-    pylab.locator_params(axis = 'x', nbins = 5)
-
-    if iresolution == None:
-        pylab.savefig('raster-1s-{0}.pdf'.format(user_id))
-    else:
-        pylab.savefig('raster-{0}s-{1}.pdf'.format(iresolution, user_id))
-    pylab.show()
-
-    ofile.close()
-
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(40, 500):
+for user_rank in xrange(54, 500):
+    print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
     ts = user_dict[user_id]
 
     reference_date = ts[0]
 
-    ts_by_day, days, num_bins = divide_by_day(reference_date, ts, num_days = 20, user_id = user_id, toplot = True)
+    ts_by_day, days, num_bins = divide_by_day(reference_date, ts, num_days = 20, user_id = user_id)
 
     include_idxs = []
 
@@ -181,4 +190,4 @@ for user_rank in xrange(40, 500):
         if include_date(day):
             include_idxs.append(idx)
 
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, num_bins = num_bins, iresolution = iresolution)
+    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = True, num_bins = num_bins, iresolution = iresolution)

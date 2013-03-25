@@ -31,7 +31,7 @@ def binarize_timeseries(day, num_bins):
 
 	return binarized
 
-def divide_by_day(reference_date, ts, num_days, user_id = 'NA', toplot = False):
+def divide_by_day(reference_date, ts, num_days, user_id = 'NA'):
 	# Idea: Set a starttime and an endtime. Collect all of the ts[i]
 	# that lie between starttime and endtime. Generate a binary timeseries
 	# from that.
