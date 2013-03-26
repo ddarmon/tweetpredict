@@ -3,11 +3,12 @@
 #	A file that takes in a .dat file (a time series that has been discretiezed)
 #	and outputs 
 
-import cssr_interface
 import sys
 import pylab
 import numpy
 import ipdb
+
+from filter_data_methods import *
 
 def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 	# This function takes in the file name for a
@@ -38,7 +39,7 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 	ntest = ndays - (ntrain + ntune)
 
 	if toprint:
-		print 'ntrain: {0}\nntune: {1}\nntest: {2}'.format(ntrain, ntune, ntest)
+		print 'ntrain: {0}\nntune: {1}\nntest: {2}\n'.format(ntrain, ntune, ntest)
 
 	# Generate the train/tune/test datasets.
 
@@ -62,51 +63,3 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 		testfile.write('{0}\n'.format(days[ind]))
 
 	testfile.close()
-
-def get_top_K_users(K = 5):
-	ofile = open('user_lookup/tweet_counts_labeled.tsv')
-
-	ofile.readline()
-
-	users = []
-
-	for k in range(K):
-		line = ofile.readline().split('\t')
-
-		users.append(line[0])
-
-	ofile.close()
-
-	return users
-
-# Use CSSR to generate the CSM files
-
-users = get_top_K_users(40)
-
-for user in users:
-	suffix = user
-
-	# suffix = '184274305'
-	# suffix = '14448173'
-	# suffix = '1712831'
-	# suffix = '196071730'
-	# suffix = '59697909'
-	# suffix = 'FAKE'
-	fname = 'timeseries/byday-600s-{}'.format(suffix)
-
-	create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True)
-
-	# fname_to_CSSR = fname + '-train'
-
-	# if len(sys.argv) > 1:
-	# 	historyLength = sys.argv[1]
-	# else:
-	# 	historyLength = 2
-
-	# is_multiline = True
-
-	# cssr_interface.run_CSSR(filename = fname_to_CSSR, L = historyLength, savefiles = True, showdot = True, is_multiline = is_multiline, showCSSRoutput = False)
-
-	# hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname_to_CSSR)
-
-	# print 'C_mu: {0}\nh_mu: {1}\nNumber of States: {2}'.format(Cmu, hmu, num_states)

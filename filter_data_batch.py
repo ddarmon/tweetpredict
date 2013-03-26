@@ -6,10 +6,12 @@ import sys
 
 from filter_data_methods import *
 
-rank_start = 0 # The ith most highly tweeting user, where we start
+from traintunetest import create_traintunetest
+
+rank_start = 200 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
-K = 40
+K = 1000
 
 users = get_K_users(K = K, start = rank_start)
 
@@ -40,6 +42,8 @@ for index, user_num in enumerate(range(len(users))):
     correct_by_L = numpy.zeros(len(Ls))
 
     fname = 'timeseries/byday-600s-{}'.format(suffix)
+
+    create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True) # Generate the train-tune-test partitioned data files
 
     # Get a 'zero-order' CSM that predicts as a 
     # biased coin. That is, if in the training 
