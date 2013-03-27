@@ -80,11 +80,13 @@ reference_date = time_all_tweets[0]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(5, 20):
+for user_rank in xrange(68, 1000):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
     ts = user_dict[user_id]
+
+    ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
 
     reference_date = ts[0]
 

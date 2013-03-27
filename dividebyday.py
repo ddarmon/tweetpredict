@@ -71,7 +71,7 @@ def divide_by_day(reference_date, ts, user_id = 'NA'):
 
 	newday_appended = False # Keep track of whether I've appended for the new day.
 
-	for timepoint in ts:
+	for counter, timepoint in enumerate(ts):
 		# Check if we're still in the same day bracketed 
 		# by starttime and endtime.
 
