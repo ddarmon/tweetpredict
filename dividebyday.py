@@ -93,7 +93,10 @@ def divide_by_day(reference_date, ts, user_id = 'NA'):
 				while not is_same_day(timepoint, starttime):
 					# We'll increment the day until we reach the current timepoint
 
-					ts_by_day.append([None])
+					if len(ts_by_day[-1]) == 0:
+						ts_by_day[-1].append(None)
+					else:
+						ts_by_day.append([None])
 
 					days.append(starttime)
 
