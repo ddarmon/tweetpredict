@@ -80,7 +80,7 @@ reference_date = time_all_tweets[0]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(500, 1000):
+for user_rank in xrange(0, 20):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
@@ -88,7 +88,7 @@ for user_rank in xrange(500, 1000):
 
     reference_date = ts[0]
 
-    ts_by_day, days, num_bins = divide_by_day(reference_date, ts, num_days = 20, user_id = user_id)
+    ts_by_day, days, num_bins = divide_by_day(reference_date, ts, user_id = user_id)
 
     include_idxs = []
 

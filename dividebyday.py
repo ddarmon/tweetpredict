@@ -1,6 +1,7 @@
 import datetime
 import numpy
 import pylab
+import ipdb
 
 def is_same_day(day1, day2):
 	if (day1.day != day2.day):
@@ -8,6 +9,22 @@ def is_same_day(day1, day2):
 	elif (day1.month != day2.month):
 		is_same = False
 	elif (day1.year != day2.year):
+		is_same = False
+	else:
+		is_same = True
+
+	return is_same
+
+def is_next_day(day1, day2):
+	# We'll ask 'Is day2 the day after day1?'
+
+	next_day = day1 + datetime.timedelta(days = 1)
+
+	if (next_day.day != day2.day):
+		is_same = False
+	elif (next_day.month != day2.month):
+		is_same = False
+	elif (next_day.year != day2.year):
 		is_same = False
 	else:
 		is_same = True
@@ -31,7 +48,7 @@ def binarize_timeseries(day, num_bins):
 
 	return binarized
 
-def divide_by_day(reference_date, ts, num_days, user_id = 'NA'):
+def divide_by_day(reference_date, ts, user_id = 'NA'):
 	# Idea: Set a starttime and an endtime. Collect all of the ts[i]
 	# that lie between starttime and endtime. Generate a binary timeseries
 	# from that.
@@ -69,6 +86,19 @@ def divide_by_day(reference_date, ts, num_days, user_id = 'NA'):
 			else: # we're not in the desired window, so don't record it
 				pass
 		else: # we're not in the same day, so append a new day to ts_by_day
+
+			# Add a list [None] for each day where no Tweets occur.
+
+			if not is_next_day(starttime, timepoint): # The new timepoint isn't the next day, so we want to add [None]'s to our list until we get to timepoint
+				while not is_same_day(timepoint, starttime):
+					# We'll increment the day until we reach the current timepoint
+
+					ts_by_day.append([None])
+
+					days.append(starttime)
+
+					starttime += datetime.timedelta(days = 1)
+
 			if len(ts_by_day[-1]) != 0:
 				ts_by_day.append([])
 

@@ -56,9 +56,11 @@ def include_date(date):
 
 def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolution = None):
     if iresolution != None:
-        ofile = open('timeseries/byday-{0}s-{1}.dat'.format(iresolution, user_id), 'w')
+        fname = 'timeseries_alldays/byday-{0}s-{1}.dat'.format(iresolution, user_id)
     else:
-        ofile = open('timeseries/byday-1s-{0}.dat'.format(user_id), 'w')
+        fname = 'timeseries_alldays/byday-1s-{0}.dat'.format(user_id)
+    
+    ofile = open(fname, 'w')
 
     if toplot == True or saveplot == True:
         f, axarr = pylab.subplots(len(ts), sharex = True)
@@ -67,16 +69,28 @@ def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolutio
         num_bins_coarse = num_bins / iresolution # Account for the fact that we plan to coarsen the timeseries
 
     for axind, day in enumerate(ts):
-        binarized = binarize_timeseries(day, num_bins)
+        if day[0] == None: # We've hit on a day that didn't have any Twitter activity
+
+            binarized = numpy.zeros(num_bins)
+        else: # The day has legitimate tweets
+            binarized = binarize_timeseries(day, num_bins)
 
         if iresolution != None:
             binarized = coarse_resolution(binarized, iresolution = iresolution)
 
-            if toplot == True or saveplot == True:
-                plot_raster(binarized, num_bins_coarse, axarr, axind)
+            if day[0] != None: # We only need to plot the raster if there are points to plot
+                if toplot == True or saveplot == True:
+                    plot_raster(binarized, num_bins_coarse, axarr, axind)
+            else: # We still need to fix how the axes look, even when we don't plot
+                if toplot == True or saveplot == True:
+                    axarr[axind].yaxis.set_visible(False)
         else:
-            if toplot == True or saveplot == True:
-                plot_raster(binarized, num_bins, axarr, axind)
+            if day[0] != None:
+                if toplot == True or saveplot == True:
+                    plot_raster(binarized, num_bins, axarr, axind)
+            else: # We still need to fix how the axes look, even when we don't plot
+                if toplot == True or saveplot == True:
+                    axarr[axind].yaxis.set_visible(False)
 
         for symbol in binarized:
             ofile.write("{0}".format(int(symbol)))
