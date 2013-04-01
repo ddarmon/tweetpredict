@@ -48,6 +48,8 @@ os.system('open rasters/raster-1s-{}.pdf'.format(users[uids[ind]]))
 os.system('open timeseries/byday-600s-{}-train.dat_inf.dot'.format(users[uids[ind]]))
 
 print 'For user ranked {} with userid {}...'.format(uids[ind], users[uids[ind]])
+print 'The number of inferred states was: {}'.format(int(rate_lookup[uids[ind], 3]))
+print 'The statistical complexity of the inferred epsilon-machine was: {}'.format(rate_lookup[uids[ind], 4])
 print 'The baseline rate was: {}'.format(rate_lookup[uids[ind], 1])
 print 'The cm rate was: {}'.format(rate_lookup[uids[ind], 2])
 print 'The improvement in rate was: {}'.format(rate_lookup[uids[ind], 2] - rate_lookup[uids[ind], 1])

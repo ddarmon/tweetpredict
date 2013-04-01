@@ -200,7 +200,8 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 
 				synchronized = True
 
-	print state_series
+	# This prints the state series, if we want it!
+	# print state_series
 	return prediction
 
 def zero_filter(majority_class, ts):
@@ -301,7 +302,7 @@ def compute_metrics(ts_true, ts_prediction, metric = None):
 
 		return None
 
-def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM'):
+def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM', print_predictions = False):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -325,11 +326,12 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 		if type == 'CSM':
 			prediction = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts = day, L = L)
 
-			# Visually compare the prediction to the true timeseries
+			if print_predictions:
+				# Visually compare the prediction to the true timeseries
 
-			print 'True Timeseries / Predicted Timeseries\n'
+				print 'True Timeseries / Predicted Timeseries\n'
 
-			print day[L-1:] + '\n\n' + prediction + '\n'
+				print day[L-1:] + '\n\n' + prediction + '\n'
 
 		else:
 			prediction = zero_filter(CSM, ts = day)
