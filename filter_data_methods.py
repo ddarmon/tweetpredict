@@ -202,7 +202,7 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 
 	# This prints the state series, if we want it!
 	# print state_series
-	return prediction
+	return prediction, state_series
 
 def zero_filter(majority_class, ts):
 	# We return a prediction that is all the majority
@@ -302,7 +302,7 @@ def compute_metrics(ts_true, ts_prediction, metric = None):
 
 		return None
 
-def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM', print_predictions = False):
+def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM', print_predictions = False, print_state_series = False):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -324,7 +324,7 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 	for day_ind, day in enumerate(days):
 
 		if type == 'CSM':
-			prediction = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts = day, L = L)
+			prediction, state_series = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts = day, L = L)
 
 			if print_predictions:
 				# Visually compare the prediction to the true timeseries
@@ -332,6 +332,14 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 				print 'True Timeseries / Predicted Timeseries\n'
 
 				print day[L-1:] + '\n\n' + prediction + '\n'
+
+			if print_state_series:
+				# Print out the estimated (filtered) states that the system
+				# was in at each timepoint.
+
+				print 'Filtered State Series\n'
+
+				print state_series + '\n'
 
 		else:
 			prediction = zero_filter(CSM, ts = day)
