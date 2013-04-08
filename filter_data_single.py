@@ -39,7 +39,7 @@ Ls = range(1,L_max)
 correct_by_L = numpy.zeros(len(Ls))
 
 fname = 'timeseries/byday-600s-{}'.format(suffix)
-# fname = 'even_process_sim'
+# fname = 'off_even_process_sim'
 
 create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True) # Generate the train-tune-test partitioned data files
 

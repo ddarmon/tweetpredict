@@ -24,9 +24,9 @@ toplot = True # Whether or not to display a raster plot of the sequence
 
 suffixes = ['1712831', '16290327', '184274305', '196071730', '32451329', '178808746']
 
-# prefix = 'byday-600s-{}'.format(suffixes[-1])
+prefix = 'byday-600s-{}'.format(suffixes[-1])
 # prefix = 'byday-1s-16290327'
-prefix = 'even_process'
+# prefix = 'off_even_process'
 num_its = 96
 fname = '{}.dat_inf.dot'.format(prefix)
 

@@ -8,7 +8,7 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-rank_start = 200 # The ith most highly tweeting user, where we start
+rank_start = 0 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
 K = 1000
@@ -21,6 +21,8 @@ Lopts = numpy.zeros(len(users))
 
 Cmus  = numpy.zeros(len(users))
 
+hmus = numpy.zeros(len(users))
+
 n_states = numpy.zeros(len(users))
 
 cm_rates = numpy.zeros(len(users))
@@ -28,6 +30,7 @@ cm_rates = numpy.zeros(len(users))
 baseline_rates = numpy.zeros(len(users))
 
 for index, user_num in enumerate(range(len(users))):
+    print 'On user {} of {}'.format(user_num, K)
     suffix = users[user_num]
     # suffix = 'FAKE'
 
@@ -54,7 +57,7 @@ for index, user_num in enumerate(range(len(users))):
     zero_order_predict = generate_zero_order_CSM(fname + '-train')
 
     for L_ind, L_val in enumerate(Ls):
-        print 'Performing filter with L = {0}...\n\n'.format(L_val)
+        # print 'Performing filter with L = {0}...\n\n'.format(L_val)
 
         cssr_interface.run_CSSR(filename = fname + '-train', L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
@@ -67,19 +70,19 @@ for index, user_num in enumerate(range(len(users))):
         states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
                                                 # (symbol sequence, state)
 
-        correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric)
+        correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False)
 
         correct_by_L[L_ind] = correct_rates.mean()
 
-    print 'History Length\t{} Rate'.format(metric)
+    # print 'History Length\t{} Rate'.format(metric)
 
-    for ind in range(len(Ls)):
-        print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
+    # for ind in range(len(Ls)):
+    #     print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
 
     ind_L_best = correct_by_L.argmax()
     L_best = int(Ls[ind_L_best])
 
-    print 'The optimal L was {}.'.format(L_best)
+    # print 'The optimal L was {}.'.format(L_best)
 
     Lopts[index] = L_best
 
@@ -89,9 +92,11 @@ for index, user_num in enumerate(range(len(users))):
 
     Cmus[index] = Cmu
 
+    hmus[index] = hmu
+
     n_states[index] = num_states
 
-    print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
+    # print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
 
     # Perform filter on the held out test set, using the CSM from 
     # the L chosen by the tuning set, and compute the performance.
@@ -103,9 +108,9 @@ for index, user_num in enumerate(range(len(users))):
     states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
                                                           # (symbol sequence, state)
 
-    test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric)
+    test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, print_predictions = False, print_state_series = False)
 
-    print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
+    # print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
 
     cm_rates[index] = test_correct_rates.mean()
 
@@ -115,35 +120,35 @@ for index, user_num in enumerate(range(len(users))):
 
     baseline_rates[index] = zero_order_rate.mean()
 
-    print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
+    # print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
 
-    import os
+    # import os
 
     # os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
     # os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
 
-print 'Ranking\tBaseline Rate\tCM Rate'
+# print 'Ranking\tBaseline Rate\tCM Rate'
 
-for index in range(len(cm_rates)):
-    print '{}\t{}\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index])
+# for index in range(len(cm_rates)):
+#     print '{}\t{}\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index])
 
-print 'Ranking\tLopt\tNumber of States\tCmu'
+# print 'Ranking\tLopt\tNumber of States\tCmu'
 
-for index in range(len(cm_rates)):
-    print '{}\t{}\t{}\t\t{}'.format(index + rank_start, Lopts[index], n_states[index], Cmus[index])
+# for index in range(len(cm_rates)):
+#     print '{}\t{}\t{}\t\t{}'.format(index + rank_start, Lopts[index], n_states[index], Cmus[index])
 
-print 'Ranking\tBaseline Rate\tCM Rate\t\tNumber of States'
+# print 'Ranking\tBaseline Rate\tCM Rate\t\tNumber of States'
 
-for index in range(len(cm_rates)):
-    print '{}\t{:.3}\t\t{:.3}\t\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index])
+# for index in range(len(cm_rates)):
+#     print '{}\t{:.3}\t\t{:.3}\t\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index])
 
 # Print the results to a file for further analysis.
 
-ofile = open('filtering_results.tsv', 'w')
+ofile = open('filtering_results_new.tsv', 'w')
 
-ofile.write('Ranking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\tLopt\n')
+ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
 for index in range(len(cm_rates)):
-    ofile.write('{}\t{:.3}\t{:.3}\t{}\t{}\t{}\n'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], Lopts[index]))
+    ofile.write('{}\t{}\t{:.3}\t{:.3}\t{}\t{}\t{}\t{}\n'.format(users[index + rank_start], index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], hmus[index], Lopts[index]))
 
 ofile.close()
