@@ -48,15 +48,26 @@ def binarize_timeseries(day, num_bins):
 
 	return binarized
 
-def divide_by_day(reference_date, ts, user_id = 'NA'):
+def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_reference_stop = True):
 	# Idea: Set a starttime and an endtime. Collect all of the ts[i]
 	# that lie between starttime and endtime. Generate a binary timeseries
 	# from that.
 
+	# Use reference_start and reference_stop to decide what day we should
+	# start from and end on in terms of generating a time series for 
+	# each user.
+
+	# to_reference_stop is a flag that decides whether we should
+	# continue padding forward in time with empty days. If True,
+	# we do this. If false, we stop when we run out of timepoints
+	# in ts.
+
 	# For now, set these to 6am to 10pm
 
-	starttime = datetime.datetime(year = reference_date.year, month = reference_date.month, day = reference_date.day, hour = 6)
-	endtime   = datetime.datetime(year = reference_date.year, month = reference_date.month, day = reference_date.day, hour = 22)
+	starttime = datetime.datetime(year = reference_start.year, month = reference_start.month, day = reference_start.day, hour = 6)
+	endtime   = datetime.datetime(year = reference_start.year, month = reference_start.month, day = reference_start.day, hour = 22)
+
+	num_bins = (endtime - starttime).total_seconds() + 1
 
 	# ts_by_day is a list of lists, where the internal lists contain the
 	# timeseries broken up by day
@@ -71,6 +82,8 @@ def divide_by_day(reference_date, ts, user_id = 'NA'):
 
 	newday_appended = False # Keep track of whether I've appended for the new day.
 
+	cur_day = ts[0]
+
 	for counter, timepoint in enumerate(ts):
 		# Check if we're still in the same day bracketed 
 		# by starttime and endtime.
@@ -83,9 +96,19 @@ def divide_by_day(reference_date, ts, user_id = 'NA'):
 					days.append(starttime)
 
 					newday_appended = True
+
 			else: # we're not in the desired window, so don't record it
 				pass
+
 		else: # we're not in the same day, so append a new day to ts_by_day
+			# Check if we need to add a blank day that we missed
+			# because all of the days occurred outside the window of
+			# interest.
+
+			if len(ts_by_day[-1]) == 0:
+				ts_by_day[-1].append(None)
+
+				days.append(cur_day)
 
 			# Add a list [None] for each day where no Tweets occur.
 
@@ -121,8 +144,28 @@ def divide_by_day(reference_date, ts, user_id = 'NA'):
 				newday_appended = True # Keep track that I've accounted for this day
 			else:
 				pass
+				
+		# Record the day, in case we need to include an
+		# *empty* day, which is coded as None.
 
-	num_bins = (endtime - starttime).total_seconds() + 1
+		cur_day = timepoint
+
+	if to_reference_stop:
+		# If we run out of timepoints before we reach reference_stop,
+		# we want to continue padding
+
+		while not is_same_day(reference_stop, starttime):
+					# We'll increment the day until we reach the current timepoint
+
+					if len(ts_by_day[-1]) == 0:
+						ts_by_day[-1].append(None)
+					else:
+						ts_by_day.append([None])
+
+					days.append(starttime)
+
+					starttime += datetime.timedelta(days = 1)
+
 
 	# This gets rid of a trailing list that got appended
 	# but was never added to.

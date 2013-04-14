@@ -75,12 +75,14 @@ sort_inds = num_tweets[0, :].argsort()[::-1]
 
 time_all_tweets.sort() # Sorts the times of the tweets from oldest to newest
 
-reference_date = time_all_tweets[0]
+reference_start = time_all_tweets[0]
+reference_stop  = time_all_tweets[-1]
 
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(1001, 2000):
+for user_rank in xrange(0, 3000):
+# for user_rank in xrange(0,1):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
@@ -88,9 +90,13 @@ for user_rank in xrange(1001, 2000):
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
 
-    reference_date = ts[0]
+    # You could use these if you *don't* want to forward- and back-pad with empty
+    # days.
 
-    ts_by_day, days, num_bins = divide_by_day(reference_date, ts, user_id = user_id)
+    # reference_start = ts[0]
+    # reference_stop  = ts[-1]
+
+    ts_by_day, days, num_bins = divide_by_day(reference_start, reference_stop, ts, user_id = user_id)
 
     include_idxs = []
 
