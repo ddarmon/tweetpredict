@@ -376,6 +376,14 @@ def get_top_K_users(K = 5):
 	return users
 
 def get_K_users(K = 5, start = 0):
+	# Get the start through (start + K) most frequent
+	# tweeting users.
+	#
+	# That is, rank the users by their tweet rate
+	# over the period of recording and then
+	# pick out the user_ids for the start to start + K
+	# users.
+
 	ofile = open('user_lookup/tweet_counts_labeled.tsv')
 
 	ofile.readline()

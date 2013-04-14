@@ -9,18 +9,18 @@ from extract_timeseries_methods import *
 
 from filter_data_methods import *
 
-start = 40
-K = 1000 - start
+start = 1829
+K = 1
 
 users = get_K_users(K = K, start = start)
 
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
-	ofile = open('timeseries/byday-1s-{}.dat'.format(user))
+	ofile = open('timeseries_alldays/byday-1s-{}.dat'.format(user))
 
 	ires = 600
 
-	wfile = open('timeseries/byday-{}s-{}.dat'.format(ires, user), 'w')
+	wfile = open('timeseries_alldays/byday-{}s-{}.dat'.format(ires, user), 'w')
 
 	for line in ofile:
 		data = line.rstrip()

@@ -38,7 +38,7 @@ Ls = range(1,L_max)
 
 correct_by_L = numpy.zeros(len(Ls))
 
-fname = 'timeseries/byday-600s-{}'.format(suffix)
+fname = 'timeseries_alldays/byday-600s-{}'.format(suffix)
 # fname = 'off_even_process_sim'
 
 create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True) # Generate the train-tune-test partitioned data files
@@ -95,7 +95,7 @@ epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
 states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 													  # (symbol sequence, state)
 
-test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, print_predictions = False, print_state_series = False)
+test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, print_predictions = True, print_state_series = True)
 
 print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
 
@@ -109,5 +109,5 @@ print 'Note: A zero-order CSM would always predict... {}'.format(zero_order_pred
 
 import os
 
-os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
+os.system('open rasters_alldays/raster-1s-{}.pdf'.format(suffix))
 # os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
