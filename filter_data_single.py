@@ -8,7 +8,7 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-users = get_top_K_users(1000)
+users = get_top_K_users(3000)
 
 # The system input can be of the form
 # 	python filter_data_single.py user_id metric_type

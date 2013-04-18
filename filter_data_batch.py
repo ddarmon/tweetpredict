@@ -8,10 +8,10 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-rank_start = 449 # The ith most highly tweeting user, where we start
+rank_start = 0 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
-K = 1986-rank_start
+K = 3000-rank_start
 
 users = get_K_users(K = K, start = rank_start)
 
