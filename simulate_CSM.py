@@ -18,17 +18,20 @@ class state:
 	def setEmit1State(self, state):
 		self.s_emit1 = state
 
-tosave = True # Whether or not to save the timeseries to a file.
+tosave = False # Whether or not to save the timeseries to a file.
 
 toplot = True # Whether or not to display a raster plot of the sequence
 
-suffixes = ['1712831', '16290327', '184274305', '196071730', '32451329', '178808746']
+# suffixes = ['1712831', '16290327', '184274305', '196071730', '32451329', '178808746']
+suffixes = ['17116782', '6419872', '19650336', '19734025', '1717291']
 
-prefix = 'byday-600s-{}'.format(suffixes[-1])
+to_fix_initial_state = False
+
+prefix = 'timeseries_alldays/byday-600s-{}'.format(suffixes[-1])
 # prefix = 'byday-1s-16290327'
 # prefix = 'off_even_process'
 num_its = 96
-fname = '{}.dat_inf.dot'.format(prefix)
+fname = '{}-train.dat_inf.dot'.format(prefix)
 
 ofile = open(fname)
 
@@ -58,14 +61,18 @@ ofile.close()
 
 n_states = len(CSM)
 
-num_sims = 70
+num_sims = 30
 
 urand = numpy.random.rand(num_its, num_sims)
 
 symbol_seq = numpy.empty((num_its, num_sims), dtype = 'int32')
 
 for cur_sim in xrange(num_sims):
-	cur_state = str(numpy.random.randint(0, n_states))
+	if to_fix_initial_state:
+		cur_state = '0' # Fix the initial state across trials
+	else:
+		cur_state = str(numpy.random.randint(0, n_states)) # Set the initial state at random
+
 
 	for ind in range(num_its):
 		# The following probability isn't foolproof, since

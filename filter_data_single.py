@@ -65,7 +65,7 @@ for L_ind, L_val in enumerate(Ls):
 	states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 											# (symbol sequence, state)
 
-	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric)
+	correct_rates = run_tests(fname = fname + '-tune', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = True, print_state_series = True)
 
 	correct_by_L[L_ind] = correct_rates.mean()
 

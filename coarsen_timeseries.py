@@ -9,8 +9,8 @@ from extract_timeseries_methods import *
 
 from filter_data_methods import *
 
-start = 1829
-K = 1
+start = 2141
+K = 859
 
 users = get_K_users(K = K, start = start)
 

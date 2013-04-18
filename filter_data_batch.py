@@ -8,10 +8,10 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-rank_start = 1829 # The ith most highly tweeting user, where we start
+rank_start = 2141 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
-K = 1
+K = 859
 
 users = get_K_users(K = K, start = rank_start)
 
@@ -144,7 +144,7 @@ for index, user_num in enumerate(range(len(users))):
 
 # Print the results to a file for further analysis.
 
-ofile = open('filtering_results_alldays_more.tsv', 'w')
+ofile = open('filtering_results_alldays_new_more.tsv', 'w')
 
 ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
