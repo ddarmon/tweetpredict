@@ -101,8 +101,9 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 				pass
 
 		else: # we're not in the same day, so append a new day to ts_by_day
+
 			# Check if we need to add a blank day that we missed
-			# because all of the days occurred outside the window of
+			# because all of the day's tweets occurred outside the window of
 			# interest.
 
 			if len(ts_by_day[-1]) == 0:
@@ -113,8 +114,10 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 			# Add a list [None] for each day where no Tweets occur.
 
 			if not is_next_day(starttime, timepoint): # The new timepoint isn't the next day, so we want to add [None]'s to our list until we get to timepoint
-				while not is_same_day(timepoint, starttime):
+				while not is_next_day(starttime, timepoint):
 					# We'll increment the day until we reach the current timepoint
+
+					starttime += datetime.timedelta(days = 1)
 
 					if len(ts_by_day[-1]) == 0:
 						ts_by_day[-1].append(None)
@@ -122,8 +125,6 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 						ts_by_day.append([None])
 
 					days.append(starttime)
-
-					starttime += datetime.timedelta(days = 1)
 
 			if len(ts_by_day[-1]) != 0:
 				ts_by_day.append([])
@@ -155,7 +156,7 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 		# we want to continue padding
 
 		while not is_same_day(reference_stop, starttime):
-					# We'll increment the day until we reach the current timepoint
+					# We'll increment the day until we reach the reference_stop
 
 					if len(ts_by_day[-1]) == 0:
 						ts_by_day[-1].append(None)
