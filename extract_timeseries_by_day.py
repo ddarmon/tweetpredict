@@ -81,7 +81,7 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(0, 1000):
+for user_rank in xrange(119, 3000):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 

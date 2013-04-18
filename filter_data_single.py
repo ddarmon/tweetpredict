@@ -28,13 +28,13 @@ else:
 suffix = str(user_num)
 # suffix = 'FAKE'
 
-L_max = 11
+L_max = 10
 
 metrics = ['accuracy', 'precision', 'recall', 'F']
 
 metric = metrics[metric_num]
 
-Ls = range(1,L_max)
+Ls = range(1,L_max + 1)
 
 correct_by_L = numpy.zeros(len(Ls))
 
@@ -95,13 +95,13 @@ epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
 states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
 													  # (symbol sequence, state)
 
-test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, print_predictions = True, print_state_series = True)
+test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = True, print_state_series = True)
 
 print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
 
 # Get the accuracy rate using the zero-order CSM.
 
-zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, type = 'zero')
+zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, type = 'zero')
 
 print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
 

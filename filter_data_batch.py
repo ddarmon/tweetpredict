@@ -8,10 +8,10 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-rank_start = 2141 # The ith most highly tweeting user, where we start
+rank_start = 449 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
-K = 859
+K = 1986-rank_start
 
 users = get_K_users(K = K, start = rank_start)
 
@@ -29,18 +29,22 @@ cm_rates = numpy.zeros(len(users))
 
 baseline_rates = numpy.zeros(len(users))
 
+ofile = open('filtering_results_alldays_new_more.tsv', 'w')
+
+ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
+
 for index, user_num in enumerate(range(len(users))):
     print 'On user {} of {}'.format(user_num, K)
     suffix = users[user_num]
     # suffix = 'FAKE'
 
-    L_max = 11
+    L_max = 10
 
     metrics = ['accuracy', 'precision', 'recall', 'F']
 
     metric = metrics[metric_num]
 
-    Ls = range(1,L_max)
+    Ls = range(1,L_max + 1)
 
     correct_by_L = numpy.zeros(len(Ls))
 
@@ -108,7 +112,7 @@ for index, user_num in enumerate(range(len(users))):
     states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
                                                           # (symbol sequence, state)
 
-    test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, print_predictions = False, print_state_series = False)
+    test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False)
 
     # print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
 
@@ -116,9 +120,11 @@ for index, user_num in enumerate(range(len(users))):
 
     # Get the accuracy rate using the zero-order CSM.
 
-    zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, metric = metric, type = 'zero')
+    zero_order_rate = run_tests(fname = fname + '-test', CSM = zero_order_predict, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, type = 'zero')
 
     baseline_rates[index] = zero_order_rate.mean()
+
+    ofile.write('{}\t{}\t{:.3}\t{:.3}\t{}\t{}\t{}\t{}\n'.format(users[index], index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], hmus[index], Lopts[index]))
 
     # print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
 
@@ -143,12 +149,5 @@ for index, user_num in enumerate(range(len(users))):
 #     print '{}\t{:.3}\t\t{:.3}\t\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index])
 
 # Print the results to a file for further analysis.
-
-ofile = open('filtering_results_alldays_new_more.tsv', 'w')
-
-ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
-
-for index in range(len(cm_rates)):
-    ofile.write('{}\t{}\t{:.3}\t{:.3}\t{}\t{}\t{}\t{}\n'.format(users[index], index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], hmus[index], Lopts[index]))
 
 ofile.close()

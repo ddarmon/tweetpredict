@@ -344,14 +344,24 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 		else:
 			prediction = zero_filter(CSM, ts = day)
 		
-		ts_true = day[L_max-1:]
-		ts_prediction = prediction[(L_max - L):] # This bit makes sure we predict
+		# Originally, I had
+
+		# ts_true = day[L_max - 1:]
+		# ts_prediction = prediction[(L_max - L):]
+
+		# here. I've changed that we always start
+		# predicting after seeing L_max of the timeseries.
+		# The CSM can start predicting with L_max - 1
+		# of the timeseries, but this makes it easier to
+		# compare across different methods.
+
+		ts_true = day[L_max:]
+		ts_prediction = prediction[(L_max - L + 1):] # This bit makes sure we predict
 												 # on the same amount of timeseries
 												 # regardless of L. Otherwise we 
 												 # might artificially inflate the
 												 # accuracy rate for large L CSMs.		
-		
-
+												 
 		# For a given L, compute the metric rate on the tuning set.
 		# Allowed metrics are 'accuracy', 'precision', 'recall', 'F'.
 
