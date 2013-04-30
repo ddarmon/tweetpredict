@@ -81,10 +81,9 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(119, 3000):
-    print 'Working on the user with the {}th tweet rate'.format(user_rank)
-    user_id = str(num_tweets[1, sort_inds][user_rank])
+# Some 50s [69124203]
 
+for user_id in ['69124203']:
     ts = user_dict[user_id]
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
@@ -103,4 +102,11 @@ for user_rank in xrange(119, 3000):
         if include_date(day):
             include_idxs.append(idx)
 
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = True, num_bins = num_bins, iresolution = iresolution)
+    for day in days:
+        print day
+
+    print len(days)
+
+    print len(include_idxs)
+
+    # export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = True, num_bins = num_bins, iresolution = iresolution)

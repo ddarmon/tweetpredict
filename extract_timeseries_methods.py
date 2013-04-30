@@ -58,7 +58,7 @@ def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolutio
     if iresolution != None:
         fname = 'timeseries_alldays/byday-{0}s-{1}.dat'.format(iresolution, user_id)
     else:
-        fname = 'timeseries_alldays/byday-1s-{0}.dat'.format(user_id)
+        fname = 'timeseries_extra/byday-1s-{0}.dat'.format(user_id)
     
     ofile = open(fname, 'w')
 
