@@ -81,9 +81,13 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-# Some 50s [69124203]
+# Some 49s [98078133, 95646719, 8957852]
 
-for user_id in ['69124203']:
+# Some 50s [69124203, 68113369, 88498786, 49620984, 749333, 150312587]
+
+# Some 51s [8474322, 140983662, 113651070]
+
+for user_id in ['8957852']:
     ts = user_dict[user_id]
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
@@ -108,5 +112,3 @@ for user_id in ['69124203']:
     print len(days)
 
     print len(include_idxs)
-
-    # export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = True, num_bins = num_bins, iresolution = iresolution)

@@ -84,41 +84,7 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 
 	cur_day = ts[0]
 
-	# For the first timepoint we see, we need to check if we need to pre-pad
-	# with empty days. For example, if the reference date is 9/7/12, and we
-	# start at 9/10/12, we need to prepad days for 9/7/12, 9/8/12, and 9/9/12.
-
-	timepoint = ts[0]
-
-	# Check if we've started on the reference_start
-
-	if is_same_day(timepoint, starttime):
-		pass
-	else:
-		# We need to prepad days until timepoint is the day after
-		# starttime.
-
-		while not is_same_day(day1 = timepoint, day2 = starttime):
-			days.append(starttime)
-
-			if len(ts_by_day[-1]) == 0:
-				ts_by_day[-1].append(None)
-			else:
-				ts_by_day.append([None])
-
-			starttime += datetime.timedelta(days = 1)
-			endtime += datetime.timedelta(days = 1)
-
-		ts_by_day.append([]) # This initializes ts_by_day
-							 # to the expected initial state.
-							 # before prepadding.
-
-	for counter in range(0, len(ts)):
-		timepoint = ts[counter]
-
-		# if timepoint.month == 11 and timepoint.day == 11:
-		# 	ipdb.set_trace()
-
+	for counter, timepoint in enumerate(ts):
 		# Check if we're still in the same day bracketed 
 		# by starttime and endtime.
 
@@ -192,14 +158,14 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 		while not is_same_day(reference_stop, starttime):
 					# We'll increment the day until we reach the reference_stop
 
-					starttime += datetime.timedelta(days = 1)
-
 					if len(ts_by_day[-1]) == 0:
 						ts_by_day[-1].append(None)
 					else:
 						ts_by_day.append([None])
 
 					days.append(starttime)
+
+					starttime += datetime.timedelta(days = 1)
 
 
 	# This gets rid of a trailing list that got appended
