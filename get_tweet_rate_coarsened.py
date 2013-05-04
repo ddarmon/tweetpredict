@@ -12,13 +12,13 @@ wfile = open('tweet_rate_coarsened.dat', 'w')
 
 wfile.write('user_id\ttweets per unit time\n')
 
-for user_num in range(4000, 5000):
+for user_num in range(0, 3000):
 	print 'Working on user {}...'.format(user_num)
 	user_id = users[user_num]
 
 	suffix = user_id
 
-	fname = 'timeseries_extra/byday-600s-{}.dat'.format(suffix)
+	fname = 'timeseries_alldays/byday-600s-{}.dat'.format(suffix)
 
 	ofile = open(fname)
 
