@@ -105,7 +105,7 @@ def get_epsilon_machine(fname):
 
 	return epsilon_machine
 
-def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
+def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L, verbose = True):
 	# We look at most L time steps into the past. We can
 	# synchronize on L - 1 timesteps, by virtue of how CSSR
 	# does its filtering.
@@ -129,8 +129,8 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 	# WE MIGHT HAVE TO REPEAT THIS MULTIPLE TIMES!!!
 
 	if cur_state == 'M':
-		print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[0:L-1])
-
+		if verbose == True:
+			print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[0:L-1])
 
 		prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
 										  # based on the most common symbol
@@ -163,7 +163,8 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 				cur_state = states.get(ts[i - L:i], 'M')
 
 				if cur_state == 'M':
-					print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
+					if verbose == True:
+						print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
 
 					prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
 										  			  # based on the most common symbol
@@ -186,7 +187,8 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 			cur_state = states.get(ts[i - L:i], 'M')
 
 			if cur_state == 'M':
-				print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
+				if verbose == True:
+					print 'Warning: The sequence \'{}\' isn\'t allowed by this CSM!'.format(ts[i - L:i])
 
 				prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
 												  # based on the most common symbol

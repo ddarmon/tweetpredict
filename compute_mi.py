@@ -149,7 +149,7 @@ for file1_ind in range(0, len(filenames)):
 
 		ICs[file1_ind, file2_ind] = IC
 
-numpy.savetxt('informational-coherences.dat', ICs)
+numpy.savetxt('mutual-information.dat', ICs)
 
 pylab.imshow(ICs + ICs.T, interpolation = None)
 pylab.show()
