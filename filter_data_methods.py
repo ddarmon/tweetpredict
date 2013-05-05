@@ -168,7 +168,6 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 					prediction += str(zero_order_CSM) # Since we've never seen this sequence before, we'll predict
 										  			  # based on the most common symbol
 
-					# prediction += 'M'
 				else:
 					if CSM[int(cur_state)] > 0.5:
 						prediction += '1'
@@ -200,8 +199,8 @@ def CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts, L):
 
 				synchronized = True
 
-	# This prints the state series, if we want it!
-	# print state_series
+			state_series += ';{}'.format(str(cur_state))
+
 	return prediction, state_series
 
 def zero_filter(majority_class, ts):
@@ -357,10 +356,10 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 
 		ts_true = day[L_max:]
 		ts_prediction = prediction[(L_max - L + 1):] # This bit makes sure we predict
-												 # on the same amount of timeseries
-												 # regardless of L. Otherwise we 
-												 # might artificially inflate the
-												 # accuracy rate for large L CSMs.		
+												 	 # on the same amount of timeseries
+												 	 # regardless of L. Otherwise we 
+												 	 # might artificially inflate the
+												 	 # accuracy rate for large L CSMs.		
 												 
 		# For a given L, compute the metric rate on the tuning set.
 		# Allowed metrics are 'accuracy', 'precision', 'recall', 'F'.

@@ -151,5 +151,12 @@ for file1_ind in range(0, len(filenames)):
 
 numpy.savetxt('informational-coherences.dat', ICs)
 
-pylab.imshow(ICs + IC.T, interpolation = None)
+pylab.imshow(ICs + ICs.T, interpolation = None)
+pylab.show()
+
+symmetric = numpy.log(ICs + ICs.T)
+
+symmetric[symmetric == -inf] = 0
+
+pylab.imshow(symmetric)
 pylab.show()

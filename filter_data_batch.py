@@ -126,28 +126,4 @@ for index, user_num in enumerate(range(len(users))):
 
     ofile.write('{}\t{}\t{:.3}\t{:.3}\t{}\t{}\t{}\t{}\n'.format(users[index], index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], hmus[index], Lopts[index]))
 
-    # print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
-
-    # import os
-
-    # os.system('open rasters/raster-1s-{}.pdf'.format(suffix))
-    # os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
-
-# print 'Ranking\tBaseline Rate\tCM Rate'
-
-# for index in range(len(cm_rates)):
-#     print '{}\t{}\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index])
-
-# print 'Ranking\tLopt\tNumber of States\tCmu'
-
-# for index in range(len(cm_rates)):
-#     print '{}\t{}\t{}\t\t{}'.format(index + rank_start, Lopts[index], n_states[index], Cmus[index])
-
-# print 'Ranking\tBaseline Rate\tCM Rate\t\tNumber of States'
-
-# for index in range(len(cm_rates)):
-#     print '{}\t{:.3}\t\t{:.3}\t\t{}'.format(index + rank_start, baseline_rates[index], cm_rates[index], n_states[index])
-
-# Print the results to a file for further analysis.
-
 ofile.close()

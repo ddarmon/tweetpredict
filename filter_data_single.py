@@ -111,3 +111,7 @@ import os
 
 os.system('open rasters_alldays/raster-1s-{}.pdf'.format(suffix))
 # os.system('open rasters/raster-600s-{}.pdf'.format(suffix))
+
+# Get the filtered state-series for the length of time we have
+# data for.
+
