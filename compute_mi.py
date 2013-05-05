@@ -151,12 +151,15 @@ for file1_ind in range(0, len(filenames)):
 
 numpy.savetxt('mutual-information.dat', ICs)
 
-pylab.imshow(ICs + ICs.T, interpolation = None)
-pylab.show()
+pylab.figure()
+pylab.imshow(ICs + ICs.T, interpolation = 'nearest')
+pylab.colorbar()
 
 symmetric = numpy.log(ICs + ICs.T)
 
 symmetric[symmetric == -inf] = 0
 
-pylab.imshow(symmetric)
+pylab.figure()
+pylab.imshow(symmetric, interpolation = 'nearest')
+pylab.colorbar()
 pylab.show()

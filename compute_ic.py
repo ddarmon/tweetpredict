@@ -40,12 +40,12 @@ def get_total_state_series(fname):
 
 	return overall_states
 
-users = get_K_users(K = 100, start = 0)
+users = get_K_users(K = 3000, start = 0)
 
 ICs = numpy.zeros((len(users), len(users)))
 
 for file1_ind in range(0, len(users)):
-	print 'Working on the {}th user...'.format(file1_ind)
+	print 'Working on user {}...'.format(file1_ind)
 	fname1 = 'timeseries_alldays/byday-600s-{}'.format(users[file1_ind])
 
 	timeseries1 = get_total_state_series(fname1)
@@ -60,6 +60,9 @@ for file1_ind in range(0, len(users)):
 			symbols_x.append(sym)
 
 	for file2_ind in range(file1_ind+1, len(users)):
+		if file2_ind % 500 == 0:
+			print 'Within that user, working on user {}...'.format(file2_ind)
+
 		# Create a new, empty count array
 
 		count_array = collections.defaultdict(int)
@@ -162,10 +165,10 @@ for file1_ind in range(0, len(users)):
 
 		# Estimate the informational coherence.
 
-		# We use the convention that 0/0 = 0.
-
-		if mi == 0 or numpy.min((H_x, H_y)) == 0:
+		if mi == 0 or numpy.min((H_x, H_y)) == 0: # We use the convention that 0/0 = 0.
 			IC = 0
+		elif len(symbols_x) == 1 or len(symbols_y) == 1:
+			IC = 0	# A single state process cannot have non-zero informational coherence.
 		else:
 			IC = mi / numpy.min((H_x, H_y))
 
@@ -173,7 +176,7 @@ for file1_ind in range(0, len(users)):
 
 numpy.savetxt('informational-coherence.dat', ICs)
 
-pylab.imshow(ICs, interpolation = 'nearest')
+pylab.imshow(ICs + ICs.T, interpolation = 'nearest')
 pylab.colorbar()
 
 pylab.show()
