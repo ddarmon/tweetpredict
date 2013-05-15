@@ -29,7 +29,7 @@ cm_rates = numpy.zeros(len(users))
 
 baseline_rates = numpy.zeros(len(users))
 
-ofile = open('filtering_results.tsv', 'w')
+ofile = open('filtering_results-shuffled.tsv', 'w')
 
 ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
@@ -50,7 +50,9 @@ for index, user_num in enumerate(range(len(users))):
 
     fname = 'timeseries_alldays/byday-600s-{}'.format(suffix)
 
-    create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True) # Generate the train-tune-test partitioned data files
+    numpy.random.seed(1)
+
+    create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True, shuffle = True) # Generate the train-tune-test partitioned data files
 
     # Get a 'zero-order' CSM that predicts as a 
     # biased coin. That is, if in the training 

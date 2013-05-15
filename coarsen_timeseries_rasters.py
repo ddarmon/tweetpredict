@@ -12,7 +12,7 @@ K = 3000-start
 
 # users = get_K_users(K = K, start = start)
 
-users = ['227162392']
+users = ['14870168', '18066875', '22935909', '790000', '221180607']
 
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
@@ -34,19 +34,18 @@ for index, user in enumerate(users):
 			pass
 		else:
 			data = line.rstrip()
-
+			
 			binarized = numpy.fromstring(data, dtype = 'int8') - 48
-
+			
 			binarized_coarse = coarse_resolution(binarized, iresolution = ires)
-
+			
 			# plot_raster(binarized, 57601, axarr, axind)
 			plot_raster(binarized_coarse, 96, axarr, axind, colored = True)
-
+			
 			axind += 1
 
 	pylab.xlabel('Time (600 s increments)')
 
 	pylab.savefig('raster-600s-{}-colored.pdf'.format(user))
-
 
 	ofile.close()

@@ -1,6 +1,6 @@
 ####################################################################################
 #
-#	A file that takes in a .dat file (a time series that has been discretiezed)
+#	A file that takes in a .dat file (a time series that has been discretized)
 #	and outputs 
 
 import sys
@@ -10,7 +10,7 @@ import ipdb
 
 from filter_data_methods import *
 
-def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
+def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False, shuffle = False):
 	# This function takes in the file name for a
 	# data file and outputs three files, one for
 	# training, one for tuning, and one for
@@ -38,6 +38,14 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 
 	ntest = ndays - (ntrain + ntune)
 
+	# If we should shuffle the train/tune set, 
+	# create a shuffled set of indices.
+
+	if shuffle == True:
+		shuffled_inds = numpy.arange(ntrain + ntune)
+
+		numpy.random.shuffle(shuffled_inds)
+
 	if toprint:
 		print 'ntrain: {0}\nntune: {1}\nntest: {2}\n'.format(ntrain, ntune, ntest)
 
@@ -46,14 +54,20 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False):
 	trainfile = open('{0}-train.dat'.format(fname), 'w')
 
 	for ind in xrange(ntrain):
-		trainfile.write('{0}\n'.format(days[ind]))
+		if shuffle == True:
+			trainfile.write('{0}\n'.format(days[shuffled_inds[ind]]))
+		else:
+			trainfile.write('{0}\n'.format(days[ind]))
 
 	trainfile.close()
 
 	tunefile = open('{0}-tune.dat'.format(fname), 'w')
 
 	for ind in xrange(ntrain, ntrain + ntune):
-		tunefile.write('{0}\n'.format(days[ind]))
+		if shuffle == True:
+			tunefile.write('{0}\n'.format(days[shuffled_inds[ind]]))
+		else:
+			tunefile.write('{0}\n'.format(days[ind]))
 
 	tunefile.close()
 
