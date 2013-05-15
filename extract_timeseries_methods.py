@@ -38,8 +38,20 @@ def coarse_resolution(binarized, iresolution = 60):
     
     return binarized_coarse
 
-def plot_raster(binarized, num_bins, axarr, axind):
-    axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
+def plot_raster(binarized, num_bins, axarr, axind, colored = False):
+    if colored:
+        if 0 <= axind <= 39: # This is the training set
+            axarr[axind].set_axis_bgcolor("g")
+        elif 39 <= axind <= 44:
+            axarr[axind].set_axis_bgcolor("y")
+        else:
+            axarr[axind].set_axis_bgcolor("r")
+
+    if numpy.sum(binarized) == 0: # There's nothing to plot.
+        pass
+    else: # There's something to plot.
+        axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
+
     axarr[axind].yaxis.set_visible(False)
 
 def include_date(date):

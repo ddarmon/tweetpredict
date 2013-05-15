@@ -2,17 +2,17 @@ import ipdb
 import numpy
 import pylab
 import datetime
-import random
-import glob
 
 from extract_timeseries_methods import *
 
 from filter_data_methods import *
 
-start = 3000
-K = 5000-start
+start = 0
+K = 3000-start
 
-users = get_K_users(K = K, start = start)
+# users = get_K_users(K = K, start = start)
+
+users = ['227162392']
 
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
@@ -20,7 +20,9 @@ for index, user in enumerate(users):
 
 	ires = 600
 
-	wfile = open('timeseries_alldays/byday-{}s-{}.dat'.format(ires, user), 'w')
+	f, axarr = pylab.subplots(49, sharex = True)
+
+	axind = 0
 
 	for ind, line in enumerate(ofile):
 		# For now, remove days 11 through 23
@@ -37,11 +39,14 @@ for index, user in enumerate(users):
 
 			binarized_coarse = coarse_resolution(binarized, iresolution = ires)
 
-			for symbol in binarized_coarse:
-				wfile.write("{0}".format(int(symbol)))
+			# plot_raster(binarized, 57601, axarr, axind)
+			plot_raster(binarized_coarse, 96, axarr, axind, colored = True)
 
-			wfile.write('\n')
+			axind += 1
 
-	wfile.close()
+	pylab.xlabel('Time (600 s increments)')
+
+	pylab.savefig('raster-600s-{}-colored.pdf'.format(user))
+
 
 	ofile.close()

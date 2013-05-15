@@ -8,10 +8,10 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-rank_start = 3000 # The ith most highly tweeting user, where we start
+rank_start = 0 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
-K = 5000-rank_start
+K = 3000-rank_start
 
 users = get_K_users(K = K, start = rank_start)
 
@@ -29,7 +29,7 @@ cm_rates = numpy.zeros(len(users))
 
 baseline_rates = numpy.zeros(len(users))
 
-ofile = open('filtering_results_extras.tsv', 'w')
+ofile = open('filtering_results.tsv', 'w')
 
 ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
@@ -48,7 +48,7 @@ for index, user_num in enumerate(range(len(users))):
 
     correct_by_L = numpy.zeros(len(Ls))
 
-    fname = 'timeseries_extras/byday-600s-{}'.format(suffix)
+    fname = 'timeseries_alldays/byday-600s-{}'.format(suffix)
 
     create_traintunetest(fname = fname, ratios = (0.8, 0.1, 0.1), toprint = True) # Generate the train-tune-test partitioned data files
 
@@ -124,6 +124,6 @@ for index, user_num in enumerate(range(len(users))):
 
     baseline_rates[index] = zero_order_rate.mean()
 
-    ofile.write('{}\t{}\t{:.3}\t{:.3}\t{}\t{}\t{}\t{}\n'.format(users[index], index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], hmus[index], Lopts[index]))
+    ofile.write('{}\t{}\t{:.4}\t{:.4}\t{}\t{}\t{}\t{}\n'.format(users[index], index + rank_start, baseline_rates[index], cm_rates[index], n_states[index], Cmus[index], hmus[index], Lopts[index]))
 
 ofile.close()

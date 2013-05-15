@@ -44,7 +44,7 @@ users = get_K_users(K = 3000, start = 0)
 
 ICs = numpy.zeros((len(users), len(users)))
 
-for file1_ind in range(0, len(users)):
+for file1_ind in range(0, 979):
 	print 'Working on user {}...'.format(file1_ind)
 	fname1 = 'timeseries_alldays/byday-600s-{}'.format(users[file1_ind])
 
@@ -174,9 +174,33 @@ for file1_ind in range(0, len(users)):
 
 		ICs[file1_ind, file2_ind] = IC
 
+# numpy.savetxt('informational-coherence-3.dat', ICs[979:, :])
+# numpy.savetxt('informational-coherence-fix.dat', ICs[0:979, :])
 numpy.savetxt('informational-coherence.dat', ICs)
 
-pylab.imshow(ICs + ICs.T, interpolation = 'nearest')
+ICs = numpy.loadtxt('informational-coherence.dat')
+
+modICs = ICs + ICs.T
+
+pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
 pylab.colorbar()
+pylab.xlabel('User $j$')
+pylab.ylabel('User $i$')
+
+pylab.savefig('ic.pdf')
+
+modICs = ICs.copy()
+modICs[modICs == 0] = nan
+
+pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
+pylab.colorbar()
+pylab.xlabel('User $j$')
+pylab.ylabel('User $i$')
 
 pylab.show()
+
+def get_ij(flat_ind, m):
+	i = int(flat_ind / m)
+	j = flat_ind - i*m
+
+	return i, j

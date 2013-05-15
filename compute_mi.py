@@ -8,27 +8,17 @@ import numpy
 import glob
 import pylab
 
-files = glob.glob('timeseries_alldays/byday-600s-*.dat')
+from filter_data_methods import *
 
-# Remove any train / test / tune files.
-
-filenames = []
-
-for fname in files:
-	if 'train' in fname or 'tune' in fname or 'test' in fname:
-		pass
-	else:
-		filenames.append(fname)
-
-filenames = filenames[:3000]
+users = get_K_users(K = 3000, start = 0)
 
 # Create an empty holder for the ICs
 
-ICs = numpy.zeros([len(filenames), len(filenames)])
+ICs = numpy.zeros([len(users), len(users)])
 
-for file1_ind in range(0, len(filenames)):
-	print 'Working on the {}th user...'.format(file1_ind)
-	fname1 = filenames[file1_ind]
+for file1_ind in range(0, len(users)):
+	print 'Working on user {}...'.format(file1_ind)
+	fname1 = 'timeseries_alldays/byday-600s-{}.dat'.format(users[file1_ind])
 
 	# Read in the two timeseries of interest.
 
@@ -44,12 +34,12 @@ for file1_ind in range(0, len(filenames)):
 
 	ofile.close()
 
-	for file2_ind in range(file1_ind+1, len(filenames)):
+	for file2_ind in range(file1_ind+1, len(users)):
 		# Create a new, empty count array
 
 		count_array = collections.defaultdict(int)
 
-		fname2 = filenames[file2_ind]
+		fname2 = 'timeseries_alldays/byday-600s-{}.dat'.format(users[file2_ind])
 
 		ofile = open(fname2)
 
@@ -155,11 +145,26 @@ pylab.figure()
 pylab.imshow(ICs + ICs.T, interpolation = 'nearest')
 pylab.colorbar()
 
-symmetric = numpy.log(ICs + ICs.T)
+modICs = ICs.copy()
+modICs = modICs + modICs.T
 
-symmetric[symmetric == -inf] = 0
+modICs[modICs < 0.01] = nan
+
+pylab.figure()
+pylab.imshow(modICs, interpolation = 'nearest')
+pylab.colorbar()
+
+symmetric = numpy.log10(ICs + ICs.T)
+
+symmetric[symmetric == -numpy.inf] = nan
 
 pylab.figure()
 pylab.imshow(symmetric, interpolation = 'nearest')
 pylab.colorbar()
 pylab.show()
+
+def get_ij(flat_ind, m):
+	i = int(flat_ind / m)
+	j = flat_ind - i*m
+
+	return i, j
