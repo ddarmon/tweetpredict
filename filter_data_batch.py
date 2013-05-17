@@ -80,11 +80,6 @@ for index, user_num in enumerate(range(len(users))):
 
         correct_by_L[L_ind] = correct_rates.mean()
 
-    # print 'History Length\t{} Rate'.format(metric)
-
-    # for ind in range(len(Ls)):
-    #     print '{}\t{}'.format(Ls[ind], correct_by_L[ind])
-
     ind_L_best = correct_by_L.argmax()
     L_best = int(Ls[ind_L_best])
 
@@ -92,9 +87,15 @@ for index, user_num in enumerate(range(len(users))):
 
     Lopts[index] = L_best
 
-    cssr_interface.run_CSSR(filename = fname + '-train', L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+    # use_suffix determines whether, after choosing the optimal L, we
+    # should use only the training set, or use both the training and 
+    # the tuning set, combined.
 
-    hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + '-train')
+    use_suffix = '-train+tune'
+
+    cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+
+    hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + use_suffix)
 
     Cmus[index] = Cmu
 
@@ -102,21 +103,17 @@ for index, user_num in enumerate(range(len(users))):
 
     n_states[index] = num_states
 
-    # print 'With this history length, the statistical complexity and entropy rate are:\nC_mu = {}\nh_mu = {}'.format(Cmu, hmu)
-
     # Perform filter on the held out test set, using the CSM from 
     # the L chosen by the tuning set, and compute the performance.
 
-    CSM = get_CSM(fname = '{}-train'.format(fname))
+    CSM = get_CSM(fname = '{}{}'.format(fname, use_suffix))
 
-    epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
+    epsilon_machine = get_epsilon_machine(fname = '{}{}'.format(fname,use_suffix))
 
-    states, L = get_equivalence_classes(fname + '-train') # A dictionary structure with the ordered pair
+    states, L = get_equivalence_classes(fname + use_suffix) # A dictionary structure with the ordered pair
                                                           # (symbol sequence, state)
 
     test_correct_rates = run_tests(fname = fname + '-test', CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False)
-
-    # print 'The mean {} rate on the held out test set is: {}'.format(metric, numpy.mean(test_correct_rates))
 
     cm_rates[index] = test_correct_rates.mean()
 

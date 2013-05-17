@@ -51,13 +51,17 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False, shuff
 
 	# Generate the train/tune/test datasets.
 
+	overallfile = open('{0}-train+tune.dat'.format(fname), 'w')
+
 	trainfile = open('{0}-train.dat'.format(fname), 'w')
 
 	for ind in xrange(ntrain):
 		if shuffle == True:
 			trainfile.write('{0}\n'.format(days[shuffled_inds[ind]]))
+			overallfile.write('{0}\n'.format(days[shuffled_inds[ind]]))
 		else:
 			trainfile.write('{0}\n'.format(days[ind]))
+			overallfile.write('{0}\n'.format(days[ind]))
 
 	trainfile.close()
 
@@ -66,10 +70,14 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False, shuff
 	for ind in xrange(ntrain, ntrain + ntune):
 		if shuffle == True:
 			tunefile.write('{0}\n'.format(days[shuffled_inds[ind]]))
+			overallfile.write('{0}\n'.format(days[shuffled_inds[ind]]))
 		else:
 			tunefile.write('{0}\n'.format(days[ind]))
+			overallfile.write('{0}\n'.format(days[ind]))
 
 	tunefile.close()
+
+	overallfile.close()
 
 	testfile = open('{0}-test.dat'.format(fname), 'w')
 

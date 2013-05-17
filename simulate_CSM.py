@@ -18,89 +18,106 @@ class state:
 	def setEmit1State(self, state):
 		self.s_emit1 = state
 
-tosave = False # Whether or not to save the timeseries to a file.
+# suffixes = ['17789501']
 
-toplot = True # Whether or not to display a raster plot of the sequence
+# The users with the highest statistical complexity
 
-# suffixes = ['1712831', '16290327', '184274305', '196071730', '32451329', '178808746']
-suffixes = ['17116782', '6419872', '19650336', '19734025', '1717291']
+# suffixes = ['14664756', '17789501', '18773467', '19713521', '18049840'] 
+
+# The users with the greatest CSM Rate - ESN Rate
+
+suffixes = ['14326003', '14468043','26744291', '186633188', '210014700']
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#
+# User options:
+num_its = 50000
 
 to_fix_initial_state = False
 
-prefix = 'timeseries_alldays/byday-600s-{}'.format(suffixes[-1])
-# prefix = 'byday-1s-16290327'
-# prefix = 'off_even_process'
-num_its = 96
-fname = '{}-train.dat_inf.dot'.format(prefix)
+num_sims = 1
 
-ofile = open(fname)
+tosave = True # Whether or not to save the timeseries to a file.
 
-line = ofile.readline()
+toplot = False # Whether or not to display a raster plot of the sequence
 
-while line[0] != '0':
+#
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for suffix in suffixes:
+	prefix = 'timeseries_alldays/byday-600s-{}'.format(suffix)
+
+	fname = '{}-train.dat_inf.dot'.format(prefix)
+
+	ofile = open(fname)
+
 	line = ofile.readline()
 
-CSM = collections.defaultdict(state)
+	while line[0] != '0':
+		line = ofile.readline()
 
-while line != '}':
-	lsplit = line.split()
+	CSM = collections.defaultdict(state)
 
-	from_state = lsplit[0]
-	to_state = lsplit[2]
-	esymbol = int(lsplit[5][1])
-	eprob = float(lsplit[6])
-	
-	if esymbol == 0:
-		CSM[from_state].setEmit0State(to_state, eprob)
-	elif esymbol == 1:
-		CSM[from_state].setEmit1State(to_state)
-	
-	line = ofile.readline()
+	while line != '}':
+		lsplit = line.split()
 
-ofile.close()
-
-n_states = len(CSM)
-
-num_sims = 30
-
-urand = numpy.random.rand(num_its, num_sims)
-
-symbol_seq = numpy.empty((num_its, num_sims), dtype = 'int32')
-
-for cur_sim in xrange(num_sims):
-	if to_fix_initial_state:
-		cur_state = '0' # Fix the initial state across trials
-	else:
-		cur_state = str(numpy.random.randint(0, n_states)) # Set the initial state at random
-
-
-	for ind in range(num_its):
-		# The following probability isn't foolproof, since
-		# we could run into the problem of pemit0 = None
-
-		if urand[ind, cur_sim] < CSM[cur_state].p_emit0:
-			symbol_seq[ind, cur_sim] = 0
-			cur_state = CSM[cur_state].s_emit0
-		else:
-			symbol_seq[ind, cur_sim] = 1
-			cur_state = CSM[cur_state].s_emit1
-
-if toplot:
-	f, axarr = pylab.subplots(num_sims, sharex=True)
-
-	for axind in range(num_sims):
-		axarr[axind].vlines(numpy.arange(symbol_seq.shape[0])[symbol_seq[:, axind] == 1], -0.5, 0.5)
-		axarr[axind].yaxis.set_visible(False)
-
-	pylab.show()
-
-if tosave:
-	ofile = open('{}_sim.dat'.format(prefix), 'w')
-
-	for trial in xrange(symbol_seq.shape[1]):
-		for symbol in symbol_seq[:, trial]:
-			ofile.write(str(symbol))
-
-		ofile.write('\n')
+		from_state = lsplit[0]
+		to_state = lsplit[2]
+		esymbol = int(lsplit[5][1])
+		eprob = float(lsplit[6])
+		
+		if esymbol == 0:
+			CSM[from_state].setEmit0State(to_state, eprob)
+		elif esymbol == 1:
+			CSM[from_state].setEmit1State(to_state)
+		
+		line = ofile.readline()
 
 	ofile.close()
+
+	n_states = len(CSM)
+
+	urand = numpy.random.rand(num_its, num_sims)
+
+	symbol_seq = numpy.empty((num_its, num_sims), dtype = 'int32')
+
+	for cur_sim in xrange(num_sims):
+		if to_fix_initial_state:
+			cur_state = '0' # Fix the initial state across trials
+		else:
+			cur_state = str(numpy.random.randint(0, n_states)) # Set the initial state at random
+
+
+		for ind in range(num_its):
+			# The following probability isn't foolproof, since
+			# we could run into the problem of pemit0 = None
+
+			if urand[ind, cur_sim] < CSM[cur_state].p_emit0:
+				symbol_seq[ind, cur_sim] = 0
+				cur_state = CSM[cur_state].s_emit0
+			else:
+				symbol_seq[ind, cur_sim] = 1
+				cur_state = CSM[cur_state].s_emit1
+
+	if toplot:
+		f, axarr = pylab.subplots(num_sims, sharex=True)
+
+		for axind in range(num_sims):
+			axarr[axind].vlines(numpy.arange(symbol_seq.shape[0])[symbol_seq[:, axind] == 1], -0.5, 0.5)
+			axarr[axind].yaxis.set_visible(False)
+
+		pylab.show()
+
+	if tosave:
+		ofile = open('{}_sim.dat'.format(prefix), 'w')
+
+		for trial in xrange(symbol_seq.shape[1]):
+			for symbol in symbol_seq[:, trial]:
+				ofile.write(str(symbol))
+
+			ofile.write('\n')
+
+		ofile.close()

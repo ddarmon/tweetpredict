@@ -12,7 +12,7 @@ K = 3000-start
 
 # users = get_K_users(K = K, start = start)
 
-users = ['14870168', '18066875', '22935909', '790000', '221180607']
+users = ['14664756']
 
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
