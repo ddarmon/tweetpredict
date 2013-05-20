@@ -303,7 +303,7 @@ def compute_metrics(ts_true, ts_prediction, metric = None):
 
 		return None
 
-def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM', print_predictions = False, print_state_series = False):
+def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = None, metric = None, type = 'CSM', print_predictions = False, print_state_series = False, verbose = True):
 	# NOTE: The filename should *already have* the suffix
 	# '-tune', '-test', etc.
 
@@ -325,7 +325,7 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 	for day_ind, day in enumerate(days):
 
 		if type == 'CSM':
-			prediction, state_series = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts = day, L = L)
+			prediction, state_series = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, ts = day, L = L, verbose = verbose)
 
 			if print_predictions:
 				# Visually compare the prediction to the true timeseries

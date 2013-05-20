@@ -85,3 +85,80 @@ def create_traintunetest(fname, ratios = (0.8, 0.1, 0.1), toprint = False, shuff
 		testfile.write('{0}\n'.format(days[ind]))
 
 	testfile.close()
+
+def create_traintunetest_cv(fname, ratios = (0.9, 0.1), k = 5):
+	# This function takes in the file name for a
+	# data file and outputs three types of files, one type for
+	# training, one type for tuning, and one type for
+	# testing.
+
+	# It uses k-fold cross validation. So the first ratio in ratios is 
+	# the size of the combined train/tune set, and the last ratio is the 
+	# size of the testing set.
+
+	# k-fold cross-validation means we'll partition the data into 
+	# ceil(n / m) sets, and hold out one of these at a time as a tuning set.
+
+	ofile = open('{0}.dat'.format(fname))
+
+	# Pull out each line of the file. Each line
+	# corresponds to a single days worth of
+	# data.
+
+	days = [line.rstrip() for line in ofile]
+
+	ofile.close()
+
+	ndays = len(days) # The number of days in the data set
+
+	assert numpy.sum(ratios) == 1, "Warning: Your train / tune / test ratios should sum to 1."
+
+	# Get the number of training/tuning/testing
+	# days.
+
+	ntraintune = int(numpy.ceil(ndays*ratios[0]))
+
+	partition_size = int(numpy.floor(ntraintune/float(k)))
+
+	ntest = ndays - ntraintune
+
+	# Shuffle the train/tune set.
+
+	shuffled_inds = numpy.arange(ntraintune)
+
+	numpy.random.shuffle(shuffled_inds)
+
+	# Generate the train/tune/test datasets.
+
+	for k_ind in range(k):
+		trainfile = open('{0}-train-{1}.dat'.format(fname, k_ind), 'w')
+		tunefile = open('{0}-tune-{1}.dat'.format(fname, k_ind), 'w')
+
+		for leading_ind in range(0, k_ind*partition_size):
+			trainfile.write('{0}\n'.format(days[shuffled_inds[leading_ind]]))
+
+		for tuning_ind in range(k_ind*partition_size, (k_ind+1)*partition_size):
+			tunefile.write('{0}\n'.format(days[shuffled_inds[tuning_ind]]))
+
+		for trailing_ind in range((k_ind+1)*partition_size, ntraintune):
+			trainfile.write('{0}\n'.format(days[shuffled_inds[trailing_ind]]))
+
+		trainfile.close()
+
+		tunefile.close()
+
+	testfile = open('{0}-test.dat'.format(fname), 'w')
+
+	for ind in xrange(ntraintune, ndays):
+		testfile.write('{0}\n'.format(days[ind]))
+
+	testfile.close()
+
+	# Generate a combined train+tune file
+
+	traintunefile = open('{0}-train+tune.dat'.format(fname), 'w')
+
+	for ind in range(ntraintune):
+		traintunefile.write('{0}\n'.format(days[ind]))
+
+	traintunefile.close()

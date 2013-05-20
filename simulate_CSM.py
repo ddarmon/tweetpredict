@@ -26,7 +26,9 @@ class state:
 
 # The users with the greatest CSM Rate - ESN Rate
 
-suffixes = ['14326003', '14468043','26744291', '186633188', '210014700']
+CSM_file = '/Users/daviddarmon/Dropbox/papers/socialcom-2013/paper/CSM-Simulations/best-csm.txt'
+
+suffixes = [line.rstrip('\n') for line in open(CSM_file)]
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
