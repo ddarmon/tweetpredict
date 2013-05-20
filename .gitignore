@@ -7,3 +7,4 @@ timeseries_longterm
 *.dat_*
 user_lookup
 user_improvements
+filtering_results*
