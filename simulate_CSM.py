@@ -18,7 +18,7 @@ class state:
 	def setEmit1State(self, state):
 		self.s_emit1 = state
 
-# suffixes = ['17789501']
+suffixes = ['17789501']
 
 # The users with the highest statistical complexity
 
@@ -26,24 +26,24 @@ class state:
 
 # The users with the greatest CSM Rate - ESN Rate
 
-CSM_file = '/Users/daviddarmon/Dropbox/papers/socialcom-2013/paper/CSM-Simulations/best-csm.txt'
+# CSM_file = '/Users/daviddarmon/Dropbox/papers/socialcom-2013/paper/CSM-Simulations/best-csm.txt'
 
-suffixes = [line.rstrip('\n') for line in open(CSM_file)]
+# suffixes = [line.rstrip('\n') for line in open(CSM_file)]
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #
 # User options:
-num_its = 50000
+num_its = 96
 
 to_fix_initial_state = False
 
-num_sims = 1
+num_sims = 2
 
-tosave = True # Whether or not to save the timeseries to a file.
+tosave = False # Whether or not to save the timeseries to a file.
 
-toplot = False # Whether or not to display a raster plot of the sequence
+toplot = True # Whether or not to display a raster plot of the sequence
 
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,6 +110,13 @@ for suffix in suffixes:
 		for axind in range(num_sims):
 			axarr[axind].vlines(numpy.arange(symbol_seq.shape[0])[symbol_seq[:, axind] == 1], -0.5, 0.5)
 			axarr[axind].yaxis.set_visible(False)
+
+			axarr[axind].tick_params(
+		        axis='x',          # changes apply to the x-axis
+		        which='both',      # both major and minor ticks are affected
+		        bottom='off',      # ticks along the bottom edge are off
+		        top='off',         # ticks along the top edge are off
+		        color = 'white')
 
 		pylab.show()
 

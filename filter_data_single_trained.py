@@ -26,10 +26,12 @@ suffixes = [line.rstrip('\n') for line in open(CSM_file)]
 
 # suffixes = ['14326003', '14468043', '26744291', '186633188', '210014700']
 
+outfile = open('results.txt', 'w')
+
 for suffix in suffixes:
 	fname = 'timeseries_alldays/byday-600s-{}'.format(suffix)
 
-	test_fname = '/Users/daviddarmon/Dropbox/papers/socialcom-2013/paper/CSM-Simulations/best-csm'
+	test_fname = '/Users/daviddarmon/Dropbox/papers/socialcom-2013/paper/CSM-Simulations/highest-statistical-complexity'
 
 	# Get a 'zero-order' CSM that predicts as a 
 	# biased coin. That is, if in the training 
@@ -62,3 +64,7 @@ for suffix in suffixes:
 	print 'The mean {} rate using a biased coin is: {}'.format(metric, numpy.mean(zero_order_rate))
 
 	print 'Note: A zero-order CSM would always predict... {}'.format(zero_order_predict)
+
+	outfile.write('{:.4}\n'.format(numpy.mean(test_correct_rates)))
+
+outfile.close()

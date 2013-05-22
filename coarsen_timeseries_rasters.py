@@ -12,8 +12,15 @@ K = 3000-start
 
 # users = get_K_users(K = K, start = start)
 
-# users = ['14664756']
-users = ['14468043', '26744291', '186633188', '210014700',  '94831581', '9175912', '14343150', '27702107', '21881105', '15293352']
+users = ['210014700']
+# users = ['14468043', '26744291', '186633188', '210014700',  '94831581', '9175912', '14343150', '27702107', '21881105', '15293352']
+
+to_coarsen = True
+
+if to_coarsen:
+	num_bins = 96
+else:
+	num_bins = 57601
 
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
@@ -40,13 +47,19 @@ for index, user in enumerate(users):
 			
 			binarized_coarse = coarse_resolution(binarized, iresolution = ires)
 			
-			# plot_raster(binarized, 57601, axarr, axind)
-			plot_raster(binarized_coarse, 96, axarr, axind, colored = True)
+			if to_coarsen:
+				plot_raster(binarized_coarse, num_bins, axarr, axind, colored = False)
+			else:
+				plot_raster(binarized, num_bins, axarr, axind, colored = False)
+			
 			
 			axind += 1
 
 	pylab.xlabel('Time (600 s increments)')
 
-	pylab.savefig('raster-600s-{}-colored.pdf'.format(user))
+	if to_coarsen:
+		pylab.savefig('raster-600s-{}.pdf'.format(user))
+	else:
+		pylab.savefig('raster-1s-{}.pdf'.format(user))
 
 	ofile.close()

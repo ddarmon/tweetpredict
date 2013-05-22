@@ -39,20 +39,31 @@ def coarse_resolution(binarized, iresolution = 60):
     return binarized_coarse
 
 def plot_raster(binarized, num_bins, axarr, axind, colored = False):
+    if len(axarr) == 1:
+        ax = axarr
+    else:
+        ax = axarr[axind]
+
     if colored:
         if 0 <= axind <= 39: # This is the training set
-            axarr[axind].set_axis_bgcolor("g")
+            ax.set_axis_bgcolor("g")
         elif 39 <= axind <= 44:
-            axarr[axind].set_axis_bgcolor("y")
+            ax.set_axis_bgcolor("y")
         else:
-            axarr[axind].set_axis_bgcolor("r")
+            ax.set_axis_bgcolor("r")
 
     if numpy.sum(binarized) == 0: # There's nothing to plot.
         pass
     else: # There's something to plot.
-        axarr[axind].vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
+        ax.vlines(numpy.arange(num_bins)[binarized==1], -0.5, 0.5)
 
-    axarr[axind].yaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.tick_params(
+        axis='x',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        bottom='off',      # ticks along the bottom edge are off
+        top='off',         # ticks along the top edge are off
+        color = 'white')
 
 def include_date(date):
     if (date.month == 9) and (date.day == 7 or date.day == 8 or date.day == 20): # Dates in September to exclude
@@ -81,6 +92,11 @@ def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolutio
         num_bins_coarse = num_bins / iresolution # Account for the fact that we plan to coarsen the timeseries
 
     for axind, day in enumerate(ts):
+        if len(axarr) == 1:
+            ax = axarr
+        else:
+            ax = axarr[axind]
+
         if day[0] == None: # We've hit on a day that didn't have any Twitter activity
 
             binarized = numpy.zeros(num_bins)
@@ -95,14 +111,14 @@ def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolutio
                     plot_raster(binarized, num_bins_coarse, axarr, axind)
             else: # We still need to fix how the axes look, even when we don't plot
                 if toplot == True or saveplot == True:
-                    axarr[axind].yaxis.set_visible(False)
+                    ax.yaxis.set_visible(False)
         else:
             if day[0] != None:
                 if toplot == True or saveplot == True:
                     plot_raster(binarized, num_bins, axarr, axind)
             else: # We still need to fix how the axes look, even when we don't plot
                 if toplot == True or saveplot == True:
-                    axarr[axind].yaxis.set_visible(False)
+                    ax.yaxis.set_visible(False)
 
         for symbol in binarized:
             ofile.write("{0}".format(int(symbol)))
