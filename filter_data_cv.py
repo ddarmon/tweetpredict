@@ -8,7 +8,7 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest_cv
 
-rank_start = 2607 # The ith most highly tweeting user, where we start
+rank_start = 0 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
 K = 3000-rank_start
@@ -102,7 +102,8 @@ for index, user_num in enumerate(range(len(users))):
     # the tuning set, combined.
 
     use_suffix = '-train+tune'
-    # use_suffix = '-train+tune'
+
+    zero_order_predict = generate_zero_order_CSM(fname + use_suffix)
 
     cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 

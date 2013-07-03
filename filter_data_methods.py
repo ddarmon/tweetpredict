@@ -371,7 +371,7 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 	return correct_rates
 
 def get_top_K_users(K = 5):
-	ofile = open('user_lookup/tweet_counts_labeled.tsv')
+	ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts_labeled.tsv')
 
 	ofile.readline()
 
@@ -395,7 +395,7 @@ def get_K_users(K = 5, start = 0):
 	# pick out the user_ids for the start to start + K
 	# users.
 
-	ofile = open('user_lookup/tweet_counts_labeled.tsv')
+	ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts_labeled.tsv')
 
 	ofile.readline()
 

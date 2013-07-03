@@ -8,18 +8,6 @@ from dividebyday import divide_by_day, binarize_timeseries
 
 from extract_timeseries_methods import *
 
-# Setup of .csv file:
-#    "row_added_at","status_id","user_id","status_date","status_text","status_is_retweet","status_retweet_of","status_retweet_count","status_latitude","status_longitude"
-#
-# Thus, we're more interested in:
-#      "row_added_at", which gives us information about when the tweet occurs
-#      "user_id", the user who tweets
-#
-# With these two, for each user we can create a binary time series that
-# indicates 1 - a tweet, 0 - no tweet
-#
-# Think of a neuron firing v. not!
-
 files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
 
 # Create hash table of the form {userid : [time_of_tweet1, time_of_tweet2, ..., time_of_tweetT]}
@@ -81,13 +69,15 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(3000, 5000):
+for user_rank in xrange(0, 1):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
     ts = user_dict[user_id]
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
+
+    ipdb.set_trace()
 
     # You could use these if you *don't* want to forward- and back-pad with empty
     # days.

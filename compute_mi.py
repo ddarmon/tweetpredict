@@ -16,9 +16,14 @@ users = get_K_users(K = 3000, start = 0)
 
 ICs = numpy.zeros([len(users), len(users)])
 
+folder = 'timeseries_clean'
+ires   = 60*5
+# ires   = 60*10
+# ires   = 60*15
+
 for file1_ind in range(0, len(users)):
 	print 'Working on user {}...'.format(file1_ind)
-	fname1 = 'timeseries_alldays/byday-600s-{}.dat'.format(users[file1_ind])
+	fname1 = '{}/byday-{}s-{}.dat'.format(folder, ires, users[file1_ind])
 
 	# Read in the two timeseries of interest.
 
@@ -39,7 +44,7 @@ for file1_ind in range(0, len(users)):
 
 		count_array = collections.defaultdict(int)
 
-		fname2 = 'timeseries_alldays/byday-600s-{}.dat'.format(users[file2_ind])
+		fname2 = '{}/byday-{}s-{}.dat'.format(folder, ires, users[file2_ind])
 
 		ofile = open(fname2)
 
@@ -139,29 +144,36 @@ for file1_ind in range(0, len(users)):
 
 		ICs[file1_ind, file2_ind] = IC
 
-numpy.savetxt('mutual-information.dat', ICs)
+# numpy.savetxt('mutual-information.dat', ICs)
+
+ofile = open('mutual-information-{}s.dat'.format(ires), 'w')
+
+for i in range(len(users)):
+	for j in range(i+1, len(users)):
+		ofile.write('{}\t{}\t{}\n'.format(i, j, ICs[i, j]))
+
+ofile.close()
+
+sym_IC = ICs + ICs.T
+
+sym_IC[sym_IC == 0] = numpy.nan
+
+max_bar = 0.25
 
 pylab.figure()
-pylab.imshow(ICs + ICs.T, interpolation = 'nearest')
+pylab.imshow(sym_IC, interpolation = 'nearest', vmin = 0, vmax = max_bar)
 pylab.colorbar()
 
-modICs = ICs.copy()
-modICs = modICs + modICs.T
-
-modICs[modICs < 0.01] = nan
-
-pylab.figure()
-pylab.imshow(modICs, interpolation = 'nearest')
-pylab.colorbar()
-
-symmetric = numpy.log10(ICs + ICs.T)
-
-symmetric[symmetric == -numpy.inf] = nan
-
-pylab.figure()
-pylab.imshow(symmetric, interpolation = 'nearest')
-pylab.colorbar()
 pylab.show()
+
+# symmetric = numpy.log10(ICs + ICs.T)
+
+# symmetric[symmetric == -numpy.inf] = numpy.nan
+
+# pylab.figure()
+# pylab.imshow(symmetric, interpolation = 'nearest')
+# pylab.colorbar()
+# pylab.show()
 
 def get_ij(flat_ind, m):
 	i = int(flat_ind / m)

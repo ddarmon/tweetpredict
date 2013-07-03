@@ -1,3 +1,10 @@
+# This script removes the 'bad' days from the
+# time series data for the 15K network. Before
+# this script, I did this manually in the
+# coarsening step.
+#
+#	DMD 030713-11-31
+
 import ipdb
 import numpy
 import pylab
@@ -15,13 +22,13 @@ K = 3000-start
 users = get_K_users(K = K, start = start)
 
 for index, user in enumerate(users):
-	print 'Working on user {} ...'.format(start + index)
+	print 'Working on user {} with user id {}...'.format(start + index, users[start+index])
 	ofile = open('timeseries_alldays/byday-1s-{}.dat'.format(user))
 
-	ires = 600
+	ires = 1
 
 	# wfile = open('timeseries_alldays/byday-{}s-{}.dat'.format(ires, user), 'w')
-	wfile = open('timeseries_alldays/byday-{}s-{}.dat'.format(ires, user), 'w')
+	wfile = open('timeseries_clean/byday-{}s-{}.dat'.format(ires, user), 'w')
 
 	for ind, line in enumerate(ofile):
 		# For now, remove days 11 through 23
@@ -32,16 +39,7 @@ for index, user in enumerate(users):
 		if (11 <= ind <= 23) or (62 <= ind <= 68):
 			pass
 		else:
-			data = line.rstrip()
-
-			binarized = numpy.fromstring(data, dtype = 'int8') - 48
-
-			binarized_coarse = coarse_resolution(binarized, iresolution = ires)
-
-			for symbol in binarized_coarse:
-				wfile.write("{0}".format(int(symbol)))
-
-			wfile.write('\n')
+			wfile.write(line)
 
 	wfile.close()
 

@@ -69,15 +69,15 @@ users = get_K_users(K = K, start = rank_start)
 
 metric_num = 0
 
-ofile = open('bitflip-csm.tsv', 'w')
+ofile = open('bitflip-csm-test.tsv', 'w')
 
-ofile.write('user_id\tacc 0%\tacc 1%\tacc 5%\tacc10%\tbase 0%\tbase 1%\tbase 5%\tbase 10%\n')
+ofile.write('user_id\tacc 0%\tacc 10%\tacc 20%\tacc30%\tacc40%\tacc50%\tacc60%\tacc70%\tacc80%\tacc90%\tacc100%\tbase 0%\tbase 10%\tbase 20%\tbase 30%\tbase 40%\tbase 50%\tbase 60%\tbase 70%\tbase 80%\tbase 90%\tbase 100%\n')
 
 # The number of folds to use in the cross-validation step.
 
 num_folds = 9
 
-ps = [0, 1, 5, 10]
+ps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
 L_max = 10
 
@@ -102,13 +102,9 @@ for index, user_num in enumerate(range(len(users))):
 
     fname = 'timeseries_alldays/byday-600s-{}'.format(suffix)
 
-    # Generate the different test sets.
-
-    generate_bit_flips('{}.dat'.format(fname), p = 1, per_day = 96)    
-
     numpy.random.seed(1)
 
-    create_traintunetest_cv(fname = fname, ratios = (1, 0), k = num_folds) # Generate the train-tune-test partitioned data files
+    # create_traintunetest_cv(fname = fname, ratios = (1, 0), k = num_folds) # Generate the train-tune-test partitioned data files
 
     # Get a 'zero-order' CSM that predicts as a 
     # biased coin. That is, if in the training 
@@ -116,36 +112,35 @@ for index, user_num in enumerate(range(len(users))):
     # predict tweeting. Otherwise, always
     # predict not-tweeting.
 
-    for fold_ind in range(num_folds):
-        zero_order_predict = generate_zero_order_CSM(fname + '-train-' + str(fold_ind))
+    # for fold_ind in range(num_folds):
+    #     zero_order_predict = generate_zero_order_CSM(fname + '-train-' + str(fold_ind))
 
-        for L_ind, L_val in enumerate(Ls):
-            cssr_interface.run_CSSR(filename = fname + '-train-' + str(fold_ind), L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+    #     for L_ind, L_val in enumerate(Ls):
+    #         cssr_interface.run_CSSR(filename = fname + '-train-' + str(fold_ind), L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
-            CSM = get_CSM(fname = '{}-train-{}'.format(fname, fold_ind))
+    #         CSM = get_CSM(fname = '{}-train-{}'.format(fname, fold_ind))
 
-            epsilon_machine = get_epsilon_machine(fname = '{}-train-{}'.format(fname, fold_ind))
+    #         epsilon_machine = get_epsilon_machine(fname = '{}-train-{}'.format(fname, fold_ind))
 
-            # print CSM
+    #         # print CSM
 
-            states, L = get_equivalence_classes(fname + '-train-' + str(fold_ind)) # A dictionary structure with the ordered pair
-                                                    # (symbol sequence, state)
+    #         states, L = get_equivalence_classes(fname + '-train-' + str(fold_ind)) # A dictionary structure with the ordered pair
+    #                                                 # (symbol sequence, state)
 
-            correct_rates = run_tests(fname = fname + '-tune-' + str(fold_ind), CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False, verbose = False)
+    #         correct_rates = run_tests(fname = fname + '-tune-' + str(fold_ind), CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False, verbose = False)
 
-            correct_by_L[L_ind, fold_ind] = correct_rates.mean()
+    #         correct_by_L[L_ind, fold_ind] = correct_rates.mean()
 
-    ind_L_best = correct_by_L.mean(axis = 1).argmax()
-    L_best = int(Ls[ind_L_best])
+    # ind_L_best = correct_by_L.mean(axis = 1).argmax()
+    # L_best = int(Ls[ind_L_best])
 
-    # use_suffix determines whether, after choosing the optimal L, we
-    # should use only the training set, or use both the training and 
-    # the tuning set, combined.
+    # # use_suffix determines whether, after choosing the optimal L, we
+    # # should use only the training set, or use both the training and 
+    # # the tuning set, combined.
 
     use_suffix = '-train+tune'
-    # use_suffix = '-train+tune'
 
-    cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+    # cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
     hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + use_suffix)
 
@@ -155,13 +150,16 @@ for index, user_num in enumerate(range(len(users))):
 
     states, L = get_equivalence_classes(fname + use_suffix) # A dictionary structure with the ordered pair
                                                           # (symbol sequence, state)
+
+    zero_order_predict = generate_zero_order_CSM(fname + use_suffix)
+
     # Perform the filter on the 'dirty' data with the bits flipped.
 
     acc_flipped = numpy.zeros(len(ps))
     baseline_flipped = numpy.zeros(len(ps))
 
     for p_ind, p in enumerate(ps):
-        generate_bit_flips('{}.dat'.format(fname), p = p, per_day = 96, num_days = 49)
+        generate_bit_flips('{}-test.dat'.format(fname), p = p, per_day = 96, num_days = 4)
 
         acc_flipped[p_ind] = numpy.mean(run_tests(fname = 'flipbit-{}p'.format(p), CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False, verbose = False))
         baseline_flipped[p_ind] = numpy.mean(run_tests(fname = 'flipbit-{}p'.format(p), CSM = zero_order_predict, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, type = 'zero'))
