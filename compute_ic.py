@@ -49,7 +49,7 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 	correct_by_L = numpy.zeros((len(Ls), num_folds))
 
-	create_traintunetest_cv(fname = fname, k = num_folds) # Generate the train-tune-test partitioned data files
+	create_traintunetest_cv(fname = fname, k = num_folds, ratios = (1, 0)) # Generate the train-tune-test partitioned data files
 
 	for fold_ind in range(num_folds):
 	    zero_order_predict = generate_zero_order_CSM(fname + '-train-cv' + str(fold_ind))
@@ -68,8 +68,6 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 	        correct_by_L[L_ind, fold_ind] = correct_rates.mean()
 
-	cleanup_cv(fname)
-
 	ind_L_best = correct_by_L.mean(axis = 1).argmax()
 	L_best = int(Ls[ind_L_best])
 
@@ -79,19 +77,52 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 	use_suffix = '-train+tune'
 
-	cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+	# Sometimes, CSSR cannot infer the CSM for the L_best chosen using 
+	# cross-validation. In this case, we decrement L_best by one and
+	# try to infer the associated CSM. We also record this error
+	# in faulty-IC.txt.
 
-users = get_K_users(K = 10, start = 0)
+	candidate = []
+
+	cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = True)
+
+	candidate = glob.glob(fname + use_suffix + '.dat_inf.dot')
+
+	if candidate == []:
+		error_file = open('faulty-IC.txt', 'a')
+
+		error_file.write('{}\n'.format(fname + use_suffix))
+
+		error_file.close()
+
+	while candidate == []:
+		L_best -= L_best
+
+		cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = True)
+
+		candidate = glob.glob(fname + use_suffix + '.dat_inf.dot')
+
+	cleanup_cv(fname)
+
+users = get_K_users(K = 3000, start = 0)
 
 ICs = numpy.zeros((len(users), len(users)))
 
-ofile = open('informational-coherence-{}s.dat'.format(ires), 'w')
+ofile = open('informational-coherence-{}s_append.dat'.format(ires), 'w')
 
-for file1_ind in range(0, len(users)):
-	print 'Working on user {}...'.format(file1_ind)
+for file1_ind in range(0, 1):
+	# We only have to *build* the machines the first pass through
+	# the outer loop.
+
+	if file1_ind == 0:
+		first_pass = True
+	else:
+		first_pass = False
+
 	fname1 = 'timeseries_clean/byday-{}s-{}'.format(ires, users[file1_ind])
 
-	build_machine(fname = fname1, num_folds = 7, L_max = 11)
+	if first_pass:
+		build_machine(fname = fname1, num_folds = 7, L_max = 11)
 
 	timeseries1 = get_total_state_series(fname1)
 
@@ -104,9 +135,9 @@ for file1_ind in range(0, len(users)):
 		if sym not in symbols_x:
 			symbols_x.append(sym)
 
-	for file2_ind in range(file1_ind+1, len(users)):
-		if file2_ind % 500 == 0:
-			print 'Within that user, working on user {}...'.format(file2_ind)
+	# for file2_ind in range(file1_ind+1, len(users)):
+	for file2_ind in range(485, len(users)):
+		print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
 
 		# Create a new, empty count array
 
@@ -114,7 +145,8 @@ for file1_ind in range(0, len(users)):
 
 		fname2 = 'timeseries_clean/byday-{}s-{}'.format(ires, users[file2_ind])
 
-		build_machine(fname = fname2, num_folds = 7, L_max = 11)
+		if first_pass:
+			build_machine(fname = fname2, num_folds = 7, L_max = 11)
 
 		timeseries2 = get_total_state_series(fname2)
 
