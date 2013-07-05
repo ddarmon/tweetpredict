@@ -10,16 +10,20 @@ import pylab
 
 from filter_data_methods import *
 
+from traintunetest import create_traintunetest_cv, cleanup_cv
+
 L_max = 10
+
+ires = 600
 
 def get_total_state_series(fname):
 	# Get out all the CSM related structures we need.
 
-	CSM = get_CSM(fname = '{}-train'.format(fname))
+	CSM = get_CSM(fname = '{}-train+tune'.format(fname))
 
-	epsilon_machine = get_epsilon_machine(fname = '{}-train'.format(fname))
+	epsilon_machine = get_epsilon_machine(fname = '{}-train+tune'.format(fname))
 
-	zero_order_CSM = generate_zero_order_CSM(fname + '-train')
+	zero_order_CSM = generate_zero_order_CSM(fname + '-train+tune')
 
 	# Get out the timeseries.
 
@@ -27,7 +31,7 @@ def get_total_state_series(fname):
 
 	days = [line.rstrip('\n') for line in ofile]
 
-	states, L = get_equivalence_classes('{}-train'.format(fname))
+	states, L = get_equivalence_classes('{}-train+tune'.format(fname))
 
 	overall_states = []
 
@@ -40,13 +44,54 @@ def get_total_state_series(fname):
 
 	return overall_states
 
-users = get_K_users(K = 3000, start = 0)
+def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
+	Ls = range(1,L_max + 1)
+
+	correct_by_L = numpy.zeros((len(Ls), num_folds))
+
+	create_traintunetest_cv(fname = fname, k = num_folds) # Generate the train-tune-test partitioned data files
+
+	for fold_ind in range(num_folds):
+	    zero_order_predict = generate_zero_order_CSM(fname + '-train-cv' + str(fold_ind))
+
+	    for L_ind, L_val in enumerate(Ls):
+	        cssr_interface.run_CSSR(filename = fname + '-train-cv' + str(fold_ind), L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+
+	        CSM = get_CSM(fname = '{}-train-cv{}'.format(fname, fold_ind))
+
+	        epsilon_machine = get_epsilon_machine(fname = '{}-train-cv{}'.format(fname, fold_ind))
+
+	        states, L = get_equivalence_classes(fname + '-train-cv' + str(fold_ind)) # A dictionary structure with the ordered pair
+	                                                # (symbol sequence, state)
+
+	        correct_rates = run_tests(fname = fname + '-tune-cv' + str(fold_ind), CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False, verbose = False)
+
+	        correct_by_L[L_ind, fold_ind] = correct_rates.mean()
+
+	cleanup_cv(fname)
+
+	ind_L_best = correct_by_L.mean(axis = 1).argmax()
+	L_best = int(Ls[ind_L_best])
+
+	# use_suffix determines whether, after choosing the optimal L, we
+	# should use only the training set, or use both the training and 
+	# the tuning set, combined.
+
+	use_suffix = '-train+tune'
+
+	cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+
+users = get_K_users(K = 10, start = 0)
 
 ICs = numpy.zeros((len(users), len(users)))
 
-for file1_ind in range(0, 979):
+ofile = open('informational-coherence-{}s.dat'.format(ires), 'w')
+
+for file1_ind in range(0, len(users)):
 	print 'Working on user {}...'.format(file1_ind)
-	fname1 = 'timeseries_alldays/byday-600s-{}'.format(users[file1_ind])
+	fname1 = 'timeseries_clean/byday-{}s-{}'.format(ires, users[file1_ind])
+
+	build_machine(fname = fname1, num_folds = 7, L_max = 11)
 
 	timeseries1 = get_total_state_series(fname1)
 
@@ -67,7 +112,9 @@ for file1_ind in range(0, 979):
 
 		count_array = collections.defaultdict(int)
 
-		fname2 = 'timeseries_alldays/byday-600s-{}'.format(users[file2_ind])
+		fname2 = 'timeseries_clean/byday-{}s-{}'.format(ires, users[file2_ind])
+
+		build_machine(fname = fname2, num_folds = 7, L_max = 11)
 
 		timeseries2 = get_total_state_series(fname2)
 
@@ -174,33 +221,33 @@ for file1_ind in range(0, 979):
 
 		ICs[file1_ind, file2_ind] = IC
 
-# numpy.savetxt('informational-coherence-3.dat', ICs[979:, :])
-# numpy.savetxt('informational-coherence-fix.dat', ICs[0:979, :])
-numpy.savetxt('informational-coherence.dat', ICs)
+		ofile.write('{}\t{}\t{}\n'.format(file1_ind, file2_ind, numpy.max([IC, 0.])))
 
-ICs = numpy.loadtxt('informational-coherence.dat')
+ofile.close()
 
-modICs = ICs + ICs.T
+# ICs = numpy.loadtxt('informational-coherence.dat')
 
-pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
-pylab.colorbar()
-pylab.xlabel('User $j$')
-pylab.ylabel('User $i$')
+# modICs = ICs + ICs.T
 
-pylab.savefig('ic.pdf')
+# pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
+# pylab.colorbar()
+# pylab.xlabel('User $j$')
+# pylab.ylabel('User $i$')
 
-modICs = ICs.copy()
-modICs[modICs == 0] = nan
+# pylab.savefig('ic.pdf')
 
-pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
-pylab.colorbar()
-pylab.xlabel('User $j$')
-pylab.ylabel('User $i$')
+# modICs = ICs.copy()
+# modICs[modICs == 0] = nan
 
-pylab.show()
+# pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
+# pylab.colorbar()
+# pylab.xlabel('User $j$')
+# pylab.ylabel('User $i$')
 
-def get_ij(flat_ind, m):
-	i = int(flat_ind / m)
-	j = flat_ind - i*m
+# pylab.show()
 
-	return i, j
+# def get_ij(flat_ind, m):
+# 	i = int(flat_ind / m)
+# 	j = flat_ind - i*m
+
+# 	return i, j

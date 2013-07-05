@@ -3,10 +3,11 @@
 #	A file that takes in a .dat file (a time series that has been discretized)
 #	and outputs 
 
-import sys
+import os
 import pylab
 import numpy
 import ipdb
+import glob
 
 from filter_data_methods import *
 
@@ -120,8 +121,6 @@ def create_traintunetest_cv(fname, ratios = (0.9, 0.1), k = 5):
 
 	partition_size = int(numpy.floor(ntraintune/float(k)))
 
-	ntest = ndays - ntraintune
-
 	# Shuffle the train/tune set.
 
 	shuffled_inds = numpy.arange(ntraintune)
@@ -131,8 +130,8 @@ def create_traintunetest_cv(fname, ratios = (0.9, 0.1), k = 5):
 	# Generate the train/tune/test datasets.
 
 	for k_ind in range(k):
-		trainfile = open('{0}-train-{1}.dat'.format(fname, k_ind), 'w')
-		tunefile = open('{0}-tune-{1}.dat'.format(fname, k_ind), 'w')
+		trainfile = open('{0}-train-cv{1}.dat'.format(fname, k_ind), 'w')
+		tunefile = open('{0}-tune-cv{1}.dat'.format(fname, k_ind), 'w')
 
 		for leading_ind in range(0, k_ind*partition_size):
 			trainfile.write('{0}\n'.format(days[shuffled_inds[leading_ind]]))
@@ -147,13 +146,6 @@ def create_traintunetest_cv(fname, ratios = (0.9, 0.1), k = 5):
 
 		tunefile.close()
 
-	testfile = open('{0}-test.dat'.format(fname), 'w')
-
-	for ind in xrange(ntraintune, ndays):
-		testfile.write('{0}\n'.format(days[ind]))
-
-	testfile.close()
-
 	# Generate a combined train+tune file
 
 	traintunefile = open('{0}-train+tune.dat'.format(fname), 'w')
@@ -162,3 +154,15 @@ def create_traintunetest_cv(fname, ratios = (0.9, 0.1), k = 5):
 		traintunefile.write('{0}\n'.format(days[ind]))
 
 	traintunefile.close()
+
+def cleanup_cv(fname):
+	# This function removes all of the files created for cross-validation.
+
+	train_files = glob.glob('{}-train-cv*'.format(fname))
+	tune_files  = glob.glob('{}-tune-cv*'.format(fname))
+
+	for dfile in train_files:
+		os.remove(os.path.abspath(dfile))
+
+	for dfile in tune_files:
+		os.remove(os.path.abspath(dfile))
