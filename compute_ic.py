@@ -12,11 +12,11 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest_cv, cleanup_cv
 
-L_max = 10
+L_max = 11
 
 ires = 600
 
-def get_total_state_series(fname):
+def get_total_state_series(fname, already_extracted = False):
 	# Get out all the CSM related structures we need.
 
 	CSM = get_CSM(fname = '{}-train+tune'.format(fname))
@@ -25,22 +25,37 @@ def get_total_state_series(fname):
 
 	zero_order_CSM = generate_zero_order_CSM(fname + '-train+tune')
 
-	# Get out the timeseries.
+	if already_extracted:
+		ofile = open('{}-states.dat'.format(fname))
 
-	ofile = open('{}.dat'.format(fname))
+		states, L = get_equivalence_classes('{}-train+tune'.format(fname))
 
-	days = [line.rstrip('\n') for line in ofile]
+		overall_states = []
 
-	states, L = get_equivalence_classes('{}-train+tune'.format(fname))
+		for line in ofile:
+			line = line.rstrip('\n')
 
-	overall_states = []
+			overall_states.extend(line.split(';')[(L_max - L + 1):])
 
-	for day in days:
-		prediction, state_series = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, day, L, verbose = False)
+		ofile.close()
 
-		day_states = state_series.split(';')
+	else:
+		# Get out the timeseries.
 
-		overall_states.extend(day_states[(L_max - L + 1):])
+		ofile = open('{}.dat'.format(fname))
+
+		days = [line.rstrip('\n') for line in ofile]
+
+		states, L = get_equivalence_classes('{}-train+tune'.format(fname))
+
+		overall_states = []
+
+		for day in days:
+			prediction, state_series = CSM_filter(CSM, zero_order_CSM, states, epsilon_machine, day, L, verbose = False)
+
+			day_states = state_series.split(';')
+
+			overall_states.extend(day_states[(L_max - L + 1):])
 
 	return overall_states
 
@@ -106,11 +121,10 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 users = get_K_users(K = 3000, start = 0)
 
-ICs = numpy.zeros((len(users), len(users)))
-
 ofile = open('informational-coherence-{}s_append.dat'.format(ires), 'w')
 
-for file1_ind in range(0, 1):
+# for file1_ind in range(225, 3000):
+for file1_ind in range(225, 226):
 	# We only have to *build* the machines the first pass through
 	# the outer loop.
 
@@ -124,7 +138,17 @@ for file1_ind in range(0, 1):
 	if first_pass:
 		build_machine(fname = fname1, num_folds = 7, L_max = 11)
 
-	timeseries1 = get_total_state_series(fname1)
+	hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname1 + '-train+tune')
+
+	# For coin flips, we don't need to do any computations, since
+	# iid processes cannot have non-zero mutual information.
+
+	is_coinflip = False
+
+	if num_states == 1:
+		is_coinflip = True
+
+	timeseries1 = get_total_state_series(fname1, already_extracted = True)
 
 	# Get out the state labels for the first
 	# time series.
@@ -136,150 +160,171 @@ for file1_ind in range(0, 1):
 			symbols_x.append(sym)
 
 	# for file2_ind in range(file1_ind+1, len(users)):
-	for file2_ind in range(485, len(users)):
-		print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
+	for file2_ind in range(564, 565):
+		if (file2_ind % 500) == 0:
+			print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
 
-		# Create a new, empty count array
+		if is_coinflip == False:
+			# Create a new, empty count array
 
-		count_array = collections.defaultdict(int)
+			count_array = collections.defaultdict(int)
 
-		fname2 = 'timeseries_clean/byday-{}s-{}'.format(ires, users[file2_ind])
+			fname2 = 'timeseries_clean/byday-{}s-{}'.format(ires, users[file2_ind])
 
-		if first_pass:
-			build_machine(fname = fname2, num_folds = 7, L_max = 11)
+			if first_pass:
+				build_machine(fname = fname2, num_folds = 7, L_max = 11)
 
-		timeseries2 = get_total_state_series(fname2)
+			hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname2 + '-train+tune')
 
-		# Get out the symbols for the second timeseries
+			if num_states != 1:
+				timeseries2 = get_total_state_series(fname2, already_extracted = True)
 
-		symbols_y = []
+				# Get out the symbols for the second timeseries
 
-		for sym in timeseries2:
-			if sym not in symbols_y:
-				symbols_y.append(sym)
+				symbols_y = []
 
-		# Compute the joint counts.
+				for sym in timeseries2:
+					if sym not in symbols_y:
+						symbols_y.append(sym)
 
-		n = len(timeseries1)
+				# Compute the joint counts.
 
-		assert n == len(timeseries2), 'The time series are of different length!'
+				n = len(timeseries1)
 
-		n_symbols_x = len(symbols_x)
-		n_symbols_y = len(symbols_y)
+				assert n == len(timeseries2), 'The time series are of different length!'
 
-		# This computes the count table
+				n_symbols_x = len(symbols_x)
+				n_symbols_y = len(symbols_y)
 
-		for ind in range(n):
-			count_array[(timeseries1[ind], timeseries2[ind])] += 1
+				# This computes the count table
 
-		# Generate the estimated joint pmf
+				for ind in range(n):
+					count_array[(timeseries1[ind], timeseries2[ind])] += 1
 
-		jpmf = numpy.zeros((n_symbols_x, n_symbols_y))
+				# Generate the estimated joint pmf
 
-		for ind_x, symbol_x in enumerate(symbols_x):
-			for ind_y, symbol_y in enumerate(symbols_y):
-				jpmf[ind_x, ind_y] = count_array[(symbol_x, symbol_y)]/float(n)
+				jpmf = numpy.zeros((n_symbols_x, n_symbols_y))
 
-		# Compute the estimated mutual information from the pmf
+				for ind_x, symbol_x in enumerate(symbols_x):
+					for ind_y, symbol_y in enumerate(symbols_y):
+						jpmf[ind_x, ind_y] = count_array[(symbol_x, symbol_y)]/float(n)
 
-		mi = 0
+				# Compute the estimated mutual information from the pmf
 
-		for ind_x in range(n_symbols_x):
-			denom1 = jpmf[ind_x, :].sum() # p(x)
+				mi = 0
 
-			for ind_y in range(n_symbols_y):
-				num = jpmf[ind_x, ind_y] # p(x, y)
-				
-				denom2 = jpmf[:, ind_y].sum() # p(y)
+				for ind_x in range(n_symbols_x):
+					denom1 = jpmf[ind_x, :].sum() # p(x)
 
-				denom = denom1*denom2 # p(x)*p(y)
+					for ind_y in range(n_symbols_y):
+						num = jpmf[ind_x, ind_y] # p(x, y)
+						
+						denom2 = jpmf[:, ind_y].sum() # p(y)
 
-				# By convention, 0 log(0 / 0) = 0
-				# and 0 log(0 / denom) = 0. We won't have
-				# to worry about running into num log(num / 0)
-				# since we're dealing with a discrete alphabet.
+						denom = denom1*denom2 # p(x)*p(y)
 
-				if num == 0: # Handle the mutual information convention.
-					pass
+						# By convention, 0 log(0 / 0) = 0
+						# and 0 log(0 / denom) = 0. We won't have
+						# to worry about running into num log(num / 0)
+						# since we're dealing with a discrete alphabet.
+
+						if num == 0: # Handle the mutual information convention.
+							pass
+						else:
+							mi += num * numpy.log2(num/denom)
+
+				# Normalize the mutual information, using the fact that
+				# I[X; Y] <= min{H[X], H[Y]}, to give the informational
+				# coherence,
+				# 	IC[X; Y] = I[X; Y] / min{H[X], H[Y]}
+				# again the convention that 0/0 = 0.
+
+				# Estimate the entropy of X
+
+				H_x = 0
+
+				p_x = jpmf.sum(axis = 1) # The marginal pmf for X
+
+				for ind_x in range(n_symbols_x):
+					p = p_x[ind_x]
+
+					if p == 0:
+						pass
+					else:
+						H_x += p*numpy.log2(p)
+
+				H_x = -H_x
+
+				# Estimate the entropy of Y
+
+				H_y = 0
+
+				p_y = jpmf.sum(axis = 0) # The marginal pmf for Y
+
+				for ind_y in range(n_symbols_y):
+					p = p_y[ind_y]
+
+					if p == 0:
+						pass
+					else:
+						H_y += p*numpy.log2(p)
+
+				H_y = -H_y
+
+				# Estimate the informational coherence.
+
+				if mi == 0 or numpy.min((H_x, H_y)) == 0: # We use the convention that 0/0 = 0.
+					IC = 0
+				elif len(symbols_x) == 1 or len(symbols_y) == 1:
+					IC = 0	# A single state process cannot have non-zero informational coherence.
 				else:
-					mi += num * numpy.log2(num/denom)
+					IC = mi / numpy.min((H_x, H_y))
 
-		# Normalize the mutual information, using the fact that
-		# I[X; Y] <= min{H[X], H[Y]}, to give the informational
-		# coherence,
-		# 	IC[X; Y] = I[X; Y] / min{H[X], H[Y]}
-		# again the convention that 0/0 = 0.
-
-		# Estimate the entropy of X
-
-		H_x = 0
-
-		p_x = jpmf.sum(axis = 1) # The marginal pmf for X
-
-		for ind_x in range(n_symbols_x):
-			p = p_x[ind_x]
-
-			if p == 0:
-				pass
 			else:
-				H_x += p*numpy.log2(p)
-
-		H_x = -H_x
-
-		# Estimate the entropy of Y
-
-		H_y = 0
-
-		p_y = jpmf.sum(axis = 0) # The marginal pmf for Y
-
-		for ind_y in range(n_symbols_y):
-			p = p_y[ind_y]
-
-			if p == 0:
-				pass
-			else:
-				H_y += p*numpy.log2(p)
-
-		H_y = -H_y
-
-		# Estimate the informational coherence.
-
-		if mi == 0 or numpy.min((H_x, H_y)) == 0: # We use the convention that 0/0 = 0.
-			IC = 0
-		elif len(symbols_x) == 1 or len(symbols_y) == 1:
-			IC = 0	# A single state process cannot have non-zero informational coherence.
+				IC = 0.
 		else:
-			IC = mi / numpy.min((H_x, H_y))
+			IC = 0.
 
-		ICs[file1_ind, file2_ind] = IC
+		ipdb.set_trace()
 
 		ofile.write('{}\t{}\t{}\n'.format(file1_ind, file2_ind, numpy.max([IC, 0.])))
 
 ofile.close()
 
-# ICs = numpy.loadtxt('informational-coherence.dat')
+ICs = numpy.zeros((3000, 3000))
 
-# modICs = ICs + ICs.T
+ofile = open('informational-coherence-600s.dat')
 
-# pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
-# pylab.colorbar()
-# pylab.xlabel('User $j$')
-# pylab.ylabel('User $i$')
+for line_ind, line in enumerate(ofile):
+	lsplit = line.split('\t')
 
-# pylab.savefig('ic.pdf')
+	from_ind = int(lsplit[0])
+	to_ind   = int(lsplit[1])
+	weight   = float(lsplit[2])
 
-# modICs = ICs.copy()
-# modICs[modICs == 0] = nan
+	ICs[from_ind, to_ind] = weight
 
-# pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
-# pylab.colorbar()
-# pylab.xlabel('User $j$')
-# pylab.ylabel('User $i$')
+ofile.close()
 
-# pylab.show()
+modICs = ICs + ICs.T
 
-# def get_ij(flat_ind, m):
-# 	i = int(flat_ind / m)
-# 	j = flat_ind - i*m
+ICs[ICs == 0] = nan
 
-# 	return i, j
+pylab.imshow(ICs, interpolation = 'nearest')
+pylab.colorbar()
+pylab.xlabel('User $j$')
+pylab.ylabel('User $i$')
+pylab.show()
+
+modICs[modICs == 0] = nan
+
+pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
+pylab.colorbar()
+pylab.xlabel('User $j$')
+pylab.ylabel('User $i$')
+
+def get_ij(flat_ind, m):
+	i = int(flat_ind / m)
+	j = flat_ind - i*m
+
+	return i, j
