@@ -23,7 +23,7 @@ def save_total_state_series(fname):
 
 	epsilon_machine = get_epsilon_machine(fname = '{}-train+tune'.format(fname))
 
-	zero_order_CSM = generate_zero_order_CSM(fname + '-train+tune')
+	zero_order_CSM = generate_zero_order_CSM(fname)
 
 	# Get out the timeseries.
 
@@ -46,7 +46,7 @@ users = get_K_users(K = 3000, start = 0)
 
 ICs = numpy.zeros((len(users), len(users)))
 
-for file1_ind in range(43, 44):
+for file1_ind in range(1342, 3000):
 	# We only have to *build* the machines the first pass through
 	# the outer loop.
 

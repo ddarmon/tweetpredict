@@ -1,5 +1,9 @@
-# This script compute the informational coherence between two
-# time series.
+# This script computes the informational coherence between
+# two timeseries.
+#
+# It has been modified to use the THOTH (DeDeo, et al.)
+# bootstrap estimators for the entropies and 
+# mutual informations.
 
 import ipdb
 import cssr_interface
@@ -11,18 +15,23 @@ import pylab
 from filter_data_methods import *
 from traintunetest import create_traintunetest_cv, cleanup_cv
 
+import sys
+sys.path.append('/Users/daviddarmon/Documents/Reference/T/THOTH/THOTH-mi')
+import thoth.thoth as thoth
+
 L_max = 11
 
 ires = 600
 
+# The number of bootstrap samples to use in computing information
+# theoretic statistics.
+
+B_thoth = 1000
+
+print 'Performing {} bootstraps for each compution of the statistics.'.format(B_thoth)
+
 def get_total_state_series(fname, already_extracted = False):
 	# Get out all the CSM related structures we need.
-
-	CSM = get_CSM(fname = '{}-train+tune'.format(fname))
-
-	epsilon_machine = get_epsilon_machine(fname = '{}-train+tune'.format(fname))
-
-	zero_order_CSM = generate_zero_order_CSM(fname)
 
 	if already_extracted:
 		ofile = open('{}-states.dat'.format(fname))
@@ -39,6 +48,12 @@ def get_total_state_series(fname, already_extracted = False):
 		ofile.close()
 
 	else:
+		CSM = get_CSM(fname = '{}-train+tune'.format(fname))
+
+		epsilon_machine = get_epsilon_machine(fname = '{}-train+tune'.format(fname))
+
+		zero_order_CSM = generate_zero_order_CSM(fname + '-train+tune')
+
 		# Get out the timeseries.
 
 		ofile = open('{}.dat'.format(fname))
@@ -120,13 +135,13 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 users = get_K_users(K = 3000, start = 0)
 
-ofile = open('informational-coherence-{}s-tmp.dat'.format(ires), 'w')
+ofile = open('informational-coherence-{}s-thoth-2.dat'.format(ires), 'w')
 
 print 'Warning: Assuming the causal state model has already been inferred and the state series has already been extracted.'
 
 first_pass = False
 
-for file1_ind in range(0, 10):
+for file1_ind in range(522, 3000):
 	# We only have to *build* the machines the first pass through
 	# the outer loop.
 
@@ -161,10 +176,9 @@ for file1_ind in range(0, 10):
 		if sym not in symbols_x:
 			symbols_x.append(sym)
 
-	# for file2_ind in range(file1_ind+1, len(users)):
-	for file2_ind in range(file1_ind + 1, len(users)):
-		# if (file2_ind % 500) == 0:
-		print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
+	for file2_ind in range(file1_ind+1, len(users)):
+		if (file2_ind % 500) == 0:
+			print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
 
 		if is_coinflip == False:
 			# Create a new, empty count array
@@ -203,53 +217,29 @@ for file1_ind in range(0, 10):
 				for ind in range(n):
 					count_array[(timeseries1[ind], timeseries2[ind])] += 1
 
-				# Generate the estimated joint pmf
+				# Generate the estimated joint counts
 
-				jpmf = numpy.zeros((n_symbols_x, n_symbols_y))
+				joint_counts = numpy.zeros((n_symbols_x, n_symbols_y))
 
 				for ind_x, symbol_x in enumerate(symbols_x):
 					for ind_y, symbol_y in enumerate(symbols_y):
-						jpmf[ind_x, ind_y] = count_array[(symbol_x, symbol_y)]/float(n)
+						joint_counts[ind_x, ind_y] = count_array[(symbol_x, symbol_y)]
 
-				# Compute the estimated mutual information from the pmf
+				# Generate the joint pmf
 
-				mi = 0
+				jpmf = joint_counts/float(n)
 
-				for ind_x in range(n_symbols_x):
-					denom1 = jpmf[ind_x, :].sum() # p(x)
+				# Compute MLE estimates of entropies.
 
-					for ind_y in range(n_symbols_y):
-						num = jpmf[ind_x, ind_y] # p(x, y)
-						
-						denom2 = jpmf[:, ind_y].sum() # p(y)
+				# Compute marginals.
 
-						denom = denom1*denom2 # p(x)*p(y)
-
-						# By convention, 0 log(0 / 0) = 0
-						# and 0 log(0 / denom) = 0. We won't have
-						# to worry about running into num log(num / 0)
-						# since we're dealing with a discrete alphabet.
-
-						if num == 0: # Handle the mutual information convention.
-							pass
-						else:
-							mi += num * numpy.log2(num/denom)
-
-				# Normalize the mutual information, using the fact that
-				# I[X; Y] <= min{H[X], H[Y]}, to give the informational
-				# coherence,
-				# 	IC[X; Y] = I[X; Y] / min{H[X], H[Y]}
-				# again the convention that 0/0 = 0.
-
-				# Estimate the entropy of X
+				px = jpmf.sum(axis = 1)
+				py = jpmf.sum(axis = 0)
 
 				H_x = 0
+				H_y = 0
 
-				p_x = jpmf.sum(axis = 1) # The marginal pmf for X
-
-				for ind_x in range(n_symbols_x):
-					p = p_x[ind_x]
-
+				for p in px:
 					if p == 0:
 						pass
 					else:
@@ -257,21 +247,20 @@ for file1_ind in range(0, 10):
 
 				H_x = -H_x
 
-				# Estimate the entropy of Y
-
-				H_y = 0
-
-				p_y = jpmf.sum(axis = 0) # The marginal pmf for Y
-
-				for ind_y in range(n_symbols_y):
-					p = p_y[ind_y]
-
+				for p in py:
 					if p == 0:
 						pass
 					else:
 						H_y += p*numpy.log2(p)
 
 				H_y = -H_y
+
+				# Compute the bootstrap estimate of the mutual
+				# information.
+
+				results_mi = thoth.calc_mi(joint_counts, B_thoth)
+
+				mi = results_mi[0]
 
 				# Estimate the informational coherence.
 
@@ -284,10 +273,16 @@ for file1_ind in range(0, 10):
 
 			else:
 				IC = 0.
+				mi = 0.
+				H_x = -1
+				H_y = -1
 		else:
 			IC = 0.
+			mi = 0
+			H_x = -1
+			H_y = -1
 
-		ofile.write('{}\t{}\t{}\n'.format(file1_ind, file2_ind, numpy.max([IC, 0.])))
+		ofile.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(file1_ind, file2_ind, numpy.max([IC, 0.]), mi, H_x, H_y))
 
 ofile.close()
 

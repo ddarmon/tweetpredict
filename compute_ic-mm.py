@@ -120,13 +120,13 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 users = get_K_users(K = 3000, start = 0)
 
-ofile = open('informational-coherence-{}s-tmp.dat'.format(ires), 'w')
+ofile = open('informational-coherence-{}s-mm.dat'.format(ires), 'w')
 
 print 'Warning: Assuming the causal state model has already been inferred and the state series has already been extracted.'
 
 first_pass = False
 
-for file1_ind in range(0, 10):
+for file1_ind in range(0, 3000):
 	# We only have to *build* the machines the first pass through
 	# the outer loop.
 
@@ -161,10 +161,9 @@ for file1_ind in range(0, 10):
 		if sym not in symbols_x:
 			symbols_x.append(sym)
 
-	# for file2_ind in range(file1_ind+1, len(users)):
 	for file2_ind in range(file1_ind + 1, len(users)):
-		# if (file2_ind % 500) == 0:
-		print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
+		if (file2_ind % 500) == 0:
+			print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
 
 		if is_coinflip == False:
 			# Create a new, empty count array
@@ -211,29 +210,26 @@ for file1_ind in range(0, 10):
 					for ind_y, symbol_y in enumerate(symbols_y):
 						jpmf[ind_x, ind_y] = count_array[(symbol_x, symbol_y)]/float(n)
 
-				# Compute the estimated mutual information from the pmf
+				# Compute the joint entropy from the empirical joint probability
+				# mass function.
 
-				mi = 0
+				H_xy = 0
 
 				for ind_x in range(n_symbols_x):
-					denom1 = jpmf[ind_x, :].sum() # p(x)
-
 					for ind_y in range(n_symbols_y):
-						num = jpmf[ind_x, ind_y] # p(x, y)
-						
-						denom2 = jpmf[:, ind_y].sum() # p(y)
+						p = jpmf[ind_x, ind_y]
 
-						denom = denom1*denom2 # p(x)*p(y)
-
-						# By convention, 0 log(0 / 0) = 0
-						# and 0 log(0 / denom) = 0. We won't have
-						# to worry about running into num log(num / 0)
-						# since we're dealing with a discrete alphabet.
-
-						if num == 0: # Handle the mutual information convention.
+						if p == 0: # Use the convention that 0 log2 0 = 0
 							pass
 						else:
-							mi += num * numpy.log2(num/denom)
+							H_xy += p*numpy.log2(p)
+
+				H_xy = -H_xy
+
+				# Make the Miller-Madow correction for bias in the entropy
+				# estimator.
+
+				H_xy += (n_symbols_x*n_symbols_y - 1)/(2.*n)
 
 				# Normalize the mutual information, using the fact that
 				# I[X; Y] <= min{H[X], H[Y]}, to give the informational
@@ -257,6 +253,10 @@ for file1_ind in range(0, 10):
 
 				H_x = -H_x
 
+				# Make the Miller-Madow correction.
+
+				H_x += (n_symbols_x - 1)/(2.*n)
+
 				# Estimate the entropy of Y
 
 				H_y = 0
@@ -272,6 +272,14 @@ for file1_ind in range(0, 10):
 						H_y += p*numpy.log2(p)
 
 				H_y = -H_y
+
+				# Make the Miller-Madow correction.
+
+				H_y += (n_symbols_y - 1)/(2.*n)
+
+				# Estimate the mutual information.
+
+				mi = H_x + H_y - H_xy
 
 				# Estimate the informational coherence.
 
@@ -308,20 +316,23 @@ ofile.close()
 
 modICs = ICs + ICs.T
 
-ICs[ICs == 0] = nan
+pylab.figure()
 
 pylab.imshow(ICs, interpolation = 'nearest')
 pylab.colorbar()
 pylab.xlabel('User $j$')
 pylab.ylabel('User $i$')
-pylab.show()
 
 modICs[modICs == 0] = nan
+
+pylab.figure()
 
 pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
 pylab.colorbar()
 pylab.xlabel('User $j$')
 pylab.ylabel('User $i$')
+
+pylab.show()
 
 def get_ij(flat_ind, m):
 	i = int(flat_ind / m)
