@@ -135,13 +135,13 @@ def build_machine(fname, num_folds = 7, L_max = 11, metric = 'accuracy'):
 
 users = get_K_users(K = 3000, start = 0)
 
-ofile = open('informational-coherence-{}s-thoth-2.dat'.format(ires), 'w')
+ofile = open('informational-coherence-{}s-thoth-u523.dat'.format(ires), 'w')
 
 print 'Warning: Assuming the causal state model has already been inferred and the state series has already been extracted.'
 
 first_pass = False
 
-for file1_ind in range(522, 3000):
+for file1_ind in range(523, 524):
 	# We only have to *build* the machines the first pass through
 	# the outer loop.
 
@@ -176,7 +176,8 @@ for file1_ind in range(522, 3000):
 		if sym not in symbols_x:
 			symbols_x.append(sym)
 
-	for file2_ind in range(file1_ind+1, len(users)):
+	# for file2_ind in range(file1_ind+1, len(users)):
+	for file2_ind in range(524, len(users)):
 		if (file2_ind % 500) == 0:
 			print 'Working on user pair ({}, {})...'.format(file1_ind, file2_ind)
 
@@ -285,41 +286,3 @@ for file1_ind in range(522, 3000):
 		ofile.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(file1_ind, file2_ind, numpy.max([IC, 0.]), mi, H_x, H_y))
 
 ofile.close()
-
-ICs = numpy.zeros((3000, 3000))
-
-ofile = open('informational-coherence-600s.dat')
-
-for line_ind, line in enumerate(ofile):
-	lsplit = line.split('\t')
-
-	from_ind = int(lsplit[0])
-	to_ind   = int(lsplit[1])
-	weight   = float(lsplit[2])
-
-	ICs[from_ind, to_ind] = weight
-
-ofile.close()
-
-modICs = ICs + ICs.T
-
-ICs[ICs == 0] = nan
-
-pylab.imshow(ICs, interpolation = 'nearest')
-pylab.colorbar()
-pylab.xlabel('User $j$')
-pylab.ylabel('User $i$')
-pylab.show()
-
-modICs[modICs == 0] = nan
-
-pylab.imshow(modICs, interpolation = 'nearest', vmin = 0, vmax = 1)
-pylab.colorbar()
-pylab.xlabel('User $j$')
-pylab.ylabel('User $i$')
-
-def get_ij(flat_ind, m):
-	i = int(flat_ind / m)
-	j = flat_ind - i*m
-
-	return i, j
