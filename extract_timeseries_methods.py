@@ -65,6 +65,12 @@ def plot_raster(binarized, num_bins, axarr, axind, colored = False):
         top='off',         # ticks along the top edge are off
         color = 'white')
 
+def plot_raster_big(binarized, num_bins, trial, num_trials, colored = False):
+    if numpy.sum(binarized) == 0: # There's nothing to plot.
+        pass
+    else: # There's something to plot.
+        pylab.vlines(numpy.arange(num_bins)[binarized==1], trial-0.45, trial+0.45)
+
 def include_date(date):
     if (date.month == 9) and (date.day == 7 or date.day == 8 or date.day == 20): # Dates in September to exclude
         toinclude = False
@@ -79,9 +85,9 @@ def include_date(date):
 
 def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolution = None):
     if iresolution != None:
-        fname = 'timeseries_extras/byday-{0}s-{1}.dat'.format(iresolution, user_id)
+        fname = 'timeseries/byday-{0}s-{1}.dat'.format(iresolution, user_id)
     else:
-        fname = 'timeseries_extras/byday-1s-{0}.dat'.format(user_id)
+        fname = 'timeseries/byday-1s-{0}.dat'.format(user_id)
     
     ofile = open(fname, 'w')
 
@@ -92,10 +98,11 @@ def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolutio
         num_bins_coarse = num_bins / iresolution # Account for the fact that we plan to coarsen the timeseries
 
     for axind, day in enumerate(ts):
-        if len(axarr) == 1:
-            ax = axarr
-        else:
-            ax = axarr[axind]
+        if toplot == True or saveplot == True:
+            if len(axarr) == 1:
+                ax = axarr
+            else:
+                ax = axarr[axind]
 
         if day[0] == None: # We've hit on a day that didn't have any Twitter activity
 

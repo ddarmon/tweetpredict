@@ -37,8 +37,8 @@ def get_communities_dict(fname):
 
 # Dictionaries of the form {userid : community_id}
 
-type1 = 'membership_by_user_3K_weighted_IC-600s-mm'
-type2 = 'membership_by_user_3K_weighted-600s'
+type1 = 'membership_by_user_3K_weighted_IC-600s-mm-full'
+type2 = 'membership_by_user_3K_weighted_IC-600s-mm'
 
 communities_method1 = get_communities_dict(fname = '/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/{}.txt'.format(type1))
 communities_method2 = get_communities_dict(fname = '/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/{}.txt'.format(type2))
@@ -68,4 +68,4 @@ for ind1 in range(len(users)):
 
 		count += 1
 
-print 'The similarity between the two clusterings is {}...'.format(numpy.sum(binary1*binary2)/numpy.max((numpy.sum(binary1), numpy.sum(binary2))))
+print 'The similarity between {} and {} is\n\n{}...'.format(type1, type2, numpy.sum(binary1*binary2)/numpy.max((numpy.sum(binary1), numpy.sum(binary2))))

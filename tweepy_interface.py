@@ -11,9 +11,25 @@ auth.set_access_token(access_token, access_token_secret)
 
 api = tweepy.API(auth)
 
-# If the authentication was successful, you should
-# see the name of the account print out
-# print api.me().name
-
 # friends = api.lookup_friendships(user_ids = [14777850])
-friends = api.lookup_friendships(screen_names = ['lmendy7'])
+
+user = api.get_user('j_tsar')
+
+timeline_full = []
+
+for page in range(0, 150):
+	timeline_full.extend(api.user_timeline(id = user.id, page = page, include_rts = True))
+
+import codecs
+
+wfile = codecs.open('lmendy.txt', encoding='utf-8', mode='w')
+
+for ind in range(1, len(timeline_full) + 1):
+	tweet = timeline_full[-ind]
+
+	print tweet.text
+	print tweet.created_at
+
+	wfile.write(u'{}\t{}\n'.format(tweet.created_at, tweet.text))
+
+wfile.close()

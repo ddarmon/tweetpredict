@@ -7,58 +7,88 @@ from extract_timeseries_methods import *
 
 from filter_data_methods import *
 
-start = 0
-K = 3000-start
+# users = ['22935909']
 
-# users = get_K_users(K = K, start = start)
+users = [199503098, 203061249]
+users = [str(user) for user in users]
 
-# users = ['210014700']
-users = ['42381705']
+total_hours = 16
 
-to_coarsen = True
+print 'Assuming the day has been windowed into {} hours...'.format(total_hours)
+
+ires = 600
+
+if ires == 0:
+	to_coarsen = False
+else:
+	to_coarsen = True
 
 if to_coarsen:
-	num_bins = 96
+	num_bins = (3600*total_hours + 1)/ires
 else:
-	num_bins = 57601
+	num_bins = 3600*total_hours + 1
 
 for index, user in enumerate(users):
-	print 'Working on user {} ...'.format(start + index)
-	ofile = open('timeseries_alldays/byday-1s-{}.dat'.format(user))
+	ofile = open('timeseries_clean/byday-1s-{}.dat'.format(user))
 
-	ires = 600
+	line_count = 0
 
-	f, axarr = pylab.subplots(49, sharex = True)
+	for line in ofile:
+		line_count += 1
 
-	axind = 0
+	ofile.close()
+
+	ofile = open('timeseries_clean/byday-1s-{}.dat'.format(user))
+
+	f = pylab.figure()
+
+	# Count the number of trials
+
+	num_trials = 0
+
+	for line in ofile:
+		num_trials += 1
+
+	ofile.close(); ofile = open('timeseries_clean/byday-1s-{}.dat'.format(user))
 
 	for ind, line in enumerate(ofile):
-		# For now, remove days 11 through 23
-		# and days 62 through 68. These days
-		# have gaps in them for certain 
-		# databases.
+		data = line.rstrip()
+		
+		binarized = numpy.fromstring(data, dtype = 'int8') - 48
 
-		if (11 <= ind <= 23) or (62 <= ind <= 68):
-			pass
-		else:
-			data = line.rstrip()
-			
-			binarized = numpy.fromstring(data, dtype = 'int8') - 48
-			
+		if to_coarsen == True:
 			binarized_coarse = coarse_resolution(binarized, iresolution = ires)
-			
-			if to_coarsen:
-				plot_raster(binarized_coarse, num_bins, axarr, axind, colored = False)
-			else:
-				plot_raster(binarized, num_bins, axarr, axind, colored = False)
-			
-			
-			axind += 1
+		else:
+			binarized_coarse = binarized
+		
+		if to_coarsen:
+			plot_raster_big(binarized_coarse, num_bins, trial = ind, num_trials = num_trials, colored = False)
+		else:
+			plot_raster_big(binarized, num_bins, trial = ind, num_trials = num_trials, colored = False)
+	
+	tmax = len(binarized_coarse)
 
-	pylab.xlabel('Time (600 s increments)')
+	ax = f.axes[0]
+
+	# ax.axes.get_yaxis().set_visible(False)		
 
 	if to_coarsen:
-		pylab.savefig('raster-600s-{}.pdf'.format(user))
+		pylab.xlabel('Time ({} s increments)'.format(ires))
+	else:
+		pylab.xlabel('Time (1 s increments)')
+
+	pylab.ylabel('Day')
+	pylab.ylim([0, num_trials])
+	pylab.gca().invert_yaxis()
+
+	pylab.xticks(rotation='vertical')
+
+	pylab.gcf().subplots_adjust(bottom=0.2)
+
+	pylab.xlim([0, tmax])
+
+	if to_coarsen:
+		pylab.savefig('raster-{}s-{}.pdf'.format(ires, user))
 	else:
 		pylab.savefig('raster-1s-{}.pdf'.format(user))
 
