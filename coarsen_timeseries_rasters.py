@@ -2,21 +2,26 @@ import ipdb
 import numpy
 import pylab
 import datetime
+import glob
 
 from extract_timeseries_methods import *
 
 from filter_data_methods import *
 
-# users = ['22935909']
+# rank_start = 0 # The ith most highly tweeting user, where we start
+#                 # counting at 0.
 
-users = [199503098, 203061249]
-users = [str(user) for user in users]
+# K = 3000-rank_start
+
+# users = get_K_users(K = K, start = rank_start)
+
+fnames = glob.glob('timeseries/byday-1s-*.dat')
 
 total_hours = 16
 
 print 'Assuming the day has been windowed into {} hours...'.format(total_hours)
 
-ires = 600
+ires = 0
 
 if ires == 0:
 	to_coarsen = False
@@ -28,8 +33,11 @@ if to_coarsen:
 else:
 	num_bins = 3600*total_hours + 1
 
-for index, user in enumerate(users):
-	ofile = open('timeseries_clean/byday-1s-{}.dat'.format(user))
+# for index, user in enumerate(users):
+for index, fname in enumerate(fnames):
+	user = fname.split('-')[2].split('.')[0]
+
+	ofile = open('timeseries/byday-1s-{}.dat'.format(user))
 
 	line_count = 0
 
@@ -38,7 +46,7 @@ for index, user in enumerate(users):
 
 	ofile.close()
 
-	ofile = open('timeseries_clean/byday-1s-{}.dat'.format(user))
+	ofile = open('timeseries/byday-1s-{}.dat'.format(user))
 
 	f = pylab.figure()
 
@@ -49,7 +57,7 @@ for index, user in enumerate(users):
 	for line in ofile:
 		num_trials += 1
 
-	ofile.close(); ofile = open('timeseries_clean/byday-1s-{}.dat'.format(user))
+	ofile.close(); ofile = open('timeseries/byday-1s-{}.dat'.format(user))
 
 	for ind, line in enumerate(ofile):
 		data = line.rstrip()

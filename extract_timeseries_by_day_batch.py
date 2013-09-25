@@ -8,7 +8,8 @@ from dividebyday import divide_by_day, binarize_timeseries
 
 from extract_timeseries_methods import *
 
-files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
+# files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
+files = ['../timeseries_2011.tsv']
 
 # Create hash table of the form {userid : [time_of_tweet1, time_of_tweet2, ..., time_of_tweetT]}
 
@@ -69,15 +70,13 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(0, 1):
+for user_rank in xrange(0, 3000):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
     ts = user_dict[user_id]
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
-
-    ipdb.set_trace()
 
     # You could use these if you *don't* want to forward- and back-pad with empty
     # days.
@@ -93,4 +92,4 @@ for user_rank in xrange(0, 1):
         if include_date(day):
             include_idxs.append(idx)
 
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = True, num_bins = num_bins, iresolution = iresolution)
+    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)

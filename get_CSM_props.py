@@ -41,8 +41,8 @@ with open('properties_3K.txt', 'w') as ofile:
 
 comm_file_prefix = '/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/'
 
-comm_file_suffix = 'membership_by_user_3K_connected_weighted-600s.txt'
-# comm_file_suffix = 'membership_by_user_3K_connected_weighted_IC-600s-mm.txt'
+# comm_file_suffix = 'membership_by_user_3K_connected_weighted-600s.txt'
+comm_file_suffix = 'membership_by_user_3K_connected_weighted_IC-600s-mm.txt'
 # comm_file_suffix = 'membership_by_user_3K_unweighted.txt'
 
 comm_file = comm_file_prefix + comm_file_suffix
@@ -68,7 +68,7 @@ for ind in range(len(users)):
 
 # Plot (h, C) across the communities.
 
-comms_of_interest = [0, 1, 2, 3, 4]
+comms_of_interest = range(0, 9)
 # comms_of_interest = range(0, len(numpy.unique(comms)))
 
 for ind in range(len(comms_of_interest)):
