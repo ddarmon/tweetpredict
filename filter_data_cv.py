@@ -6,14 +6,16 @@ import sys
 
 from filter_data_methods import *
 
-from traintunetest import create_traintunetest_cv
+from traintunetest import create_traintunetest_cv, cleanup_cv
+
+year = '2011'
 
 rank_start = 0 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
 K = 3000-rank_start
 
-users = get_K_users(K = K, start = rank_start)
+users = get_K_users(K = K, start = rank_start, year = year)
 
 metric_num = 0
 
@@ -29,13 +31,13 @@ cm_rates = numpy.zeros(len(users))
 
 baseline_rates = numpy.zeros(len(users))
 
-ofile = open('filtering_results-cv.tsv', 'w')
+ofile = open('filtering_results-cv-{}.tsv'.format(year), 'w')
 
 ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
 # The number of folds to use in the cross-validation step.
 
-num_folds = 9
+num_folds = 10
 
 for index, user_num in enumerate(range(len(users))):
     print 'On user {} of {}'.format(user_num, K)
@@ -59,7 +61,7 @@ for index, user_num in enumerate(range(len(users))):
 
     correct_by_L = numpy.zeros((len(Ls), num_folds))
 
-    fname = 'timeseries_alldays/byday-600s-{}'.format(suffix)
+    fname = 'timeseries/byday-600s-{}'.format(suffix)
 
     numpy.random.seed(1)
 
@@ -72,25 +74,27 @@ for index, user_num in enumerate(range(len(users))):
     # predict not-tweeting.
 
     for fold_ind in range(num_folds):
-        zero_order_predict = generate_zero_order_CSM(fname + '-train-' + str(fold_ind))
+        zero_order_predict = generate_zero_order_CSM(fname + '-train-cv' + str(fold_ind))
 
         for L_ind, L_val in enumerate(Ls):
             # print 'Performing filter with L = {0}...\n\n'.format(L_val)
 
-            cssr_interface.run_CSSR(filename = fname + '-train-' + str(fold_ind), L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+            cssr_interface.run_CSSR(filename = fname + '-train-cv' + str(fold_ind), L = L_val, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
-            CSM = get_CSM(fname = '{}-train-{}'.format(fname, fold_ind))
+            CSM = get_CSM(fname = '{}-train-cv{}'.format(fname, fold_ind))
 
-            epsilon_machine = get_epsilon_machine(fname = '{}-train-{}'.format(fname, fold_ind))
+            epsilon_machine = get_epsilon_machine(fname = '{}-train-cv{}'.format(fname, fold_ind))
 
             # print CSM
 
-            states, L = get_equivalence_classes(fname + '-train-' + str(fold_ind)) # A dictionary structure with the ordered pair
+            states, L = get_equivalence_classes(fname + '-train-cv' + str(fold_ind)) # A dictionary structure with the ordered pair
                                                     # (symbol sequence, state)
 
-            correct_rates = run_tests(fname = fname + '-tune-' + str(fold_ind), CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False, verbose = False)
+            correct_rates = run_tests(fname = fname + '-tune-cv' + str(fold_ind), CSM = CSM, zero_order_CSM = zero_order_predict, states = states, epsilon_machine = epsilon_machine, L = L, L_max = L_max, metric = metric, print_predictions = False, print_state_series = False, verbose = False)
 
             correct_by_L[L_ind, fold_ind] = correct_rates.mean()
+
+    cleanup_cv(fname)
 
     ind_L_best = correct_by_L.mean(axis = 1).argmax()
     L_best = int(Ls[ind_L_best])

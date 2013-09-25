@@ -370,8 +370,11 @@ def run_tests(fname, CSM, zero_order_CSM, states, epsilon_machine, L, L_max = No
 
 	return correct_rates
 
-def get_top_K_users(K = 5):
-	ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts_labeled.tsv')
+def get_top_K_users(K = 5, year = None):
+	if year == None:
+		ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts_labeled.tsv')
+	else:
+		ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts-{}.tsv'.format(year))
 
 	ofile.readline()
 
@@ -386,7 +389,7 @@ def get_top_K_users(K = 5):
 
 	return users
 
-def get_K_users(K = 5, start = 0):
+def get_K_users(K = 5, start = 0, year = None):
 	# Get the start through (start + K) most frequent
 	# tweeting users.
 	#
@@ -394,8 +397,11 @@ def get_K_users(K = 5, start = 0):
 	# over the period of recording and then
 	# pick out the user_ids for the start to start + K
 	# users.
-
-	ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts_labeled.tsv')
+	
+	if year == None:
+		ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts_labeled.tsv')
+	else:
+		ofile = open('/Users/daviddarmon/Documents/Reference/R/Research/2013/network/tweetpredict/user_lookup/tweet_counts-{}.tsv'.format(year))
 
 	ofile.readline()
 

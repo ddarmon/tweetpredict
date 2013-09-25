@@ -93,3 +93,7 @@ for user_rank in xrange(0, 3000):
             include_idxs.append(idx)
 
     export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
+
+    # with open('2011_tweetrank.txt', 'w') as ofile:
+    #     for ind in range(num_tweets.shape[1]):
+    #         ofile.write('{}\t{}\n'.format(num_tweets[1, sort_inds][ind], num_tweets[0, sort_inds][ind]))

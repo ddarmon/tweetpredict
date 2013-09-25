@@ -155,6 +155,13 @@ def create_traintunetest_cv(fname, ratios = (0.9, 0.1), k = 5):
 
 	traintunefile.close()
 
+	testfile = open('{0}-test.dat'.format(fname), 'w')
+
+	for ind in xrange(ntraintune, ndays):
+		testfile.write('{0}\n'.format(days[ind]))
+
+	testfile.close()
+
 def cleanup_cv(fname):
 	# This function removes all of the files created for cross-validation.
 
