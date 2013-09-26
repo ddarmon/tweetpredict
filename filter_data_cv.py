@@ -10,8 +10,12 @@ from traintunetest import create_traintunetest_cv, cleanup_cv
 
 year = '2011'
 
-rank_start = 0 # The ith most highly tweeting user, where we start
+# rank_start = 0 # The ith most highly tweeting user, where we start
+rank_start = 2907 # The ith most highly tweeting user, where we start
                 # counting at 0.
+
+# To get the proper place to start up, from the failed run, compute
+# rank_start + user_num + 1.
 
 K = 3000-rank_start
 
@@ -31,7 +35,7 @@ cm_rates = numpy.zeros(len(users))
 
 baseline_rates = numpy.zeros(len(users))
 
-ofile = open('filtering_results-cv-{}.tsv'.format(year), 'w')
+ofile = open('filtering_results-cv-{}-append.tsv'.format(year), 'w')
 
 ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
@@ -99,30 +103,42 @@ for index, user_num in enumerate(range(len(users))):
     ind_L_best = correct_by_L.mean(axis = 1).argmax()
     L_best = int(Ls[ind_L_best])
 
-    Lopts[index] = L_best
+    # The while loop handles that, sometimes, when building a CSM using
+    # the train+tune set, we fail to construct the the \epsilon-machine.
+    # In these cases, we decrement L_best by 1 and try again.
 
-    # use_suffix determines whether, after choosing the optimal L, we
-    # should use only the training set, or use both the training and 
-    # the tuning set, combined.
+    while True:
+        try:
+            Lopts[index] = L_best
 
-    use_suffix = '-train+tune'
+            # use_suffix determines whether, after choosing the optimal L, we
+            # should use only the training set, or use both the training and 
+            # the tuning set, combined.
 
-    zero_order_predict = generate_zero_order_CSM(fname + use_suffix)
+            use_suffix = '-train+tune'
 
-    cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
+            zero_order_predict = generate_zero_order_CSM(fname + use_suffix)
 
-    hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + use_suffix)
+            cssr_interface.run_CSSR(filename = fname + use_suffix, L = L_best, savefiles = True, showdot = False, is_multiline = True, showCSSRoutput = False)
 
-    Cmus[index] = Cmu
+            hist_length, Cmu, hmu, num_states = cssr_interface.parseResultFile(fname + use_suffix)
 
-    hmus[index] = hmu
+            Cmus[index] = Cmu
 
-    n_states[index] = num_states
+            hmus[index] = hmu
 
-    # Perform filter on the held out test set, using the CSM from 
-    # the L chosen by the tuning set, and compute the performance.
+            n_states[index] = num_states
 
-    CSM = get_CSM(fname = '{}{}'.format(fname, use_suffix))
+            # Perform filter on the held out test set, using the CSM from 
+            # the L chosen by the tuning set, and compute the performance.
+
+            CSM = get_CSM(fname = '{}{}'.format(fname, use_suffix))
+
+            break # If everything goes as planned, break out of the while loop.
+        except IOError:
+            print '\n\nNo CSM was generated using the train+tune set. Decrementing L_best by one...\n\n'
+
+            L_best -= 1 # If we fail to build the CSM, decrement L_best by 1 and try again.
 
     epsilon_machine = get_epsilon_machine(fname = '{}{}'.format(fname,use_suffix))
 
