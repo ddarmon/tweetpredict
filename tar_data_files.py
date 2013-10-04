@@ -16,10 +16,10 @@ import gzip
 
 tar = tarfile.open('15K_timeseries.tar', 'w')
 
-fnames = glob.glob('timeseries_clean/byday-1s-*.dat')
+fnames = glob.glob('timeseries/byday-600s-*.dat')
 
 for fname in fnames:
-	if 'train' not in fname and 'states' not in fname:
+	if 'train' not in fname and 'states' not in fname and 'test' not in fname:
 		tar.add(fname)
 
 tar.close()

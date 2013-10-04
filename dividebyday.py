@@ -101,7 +101,9 @@ def divide_by_day(reference_start, reference_stop, ts, user_id = 'NA', to_refere
 
 		ts_by_day.append(ts_by_day_dict.get(cur_day, [None]))
 
-
+	if ts == []: # Need to create relative times for when the timeseries is empty.
+		relative_start_cutoff = datetime.datetime(year = reference_start.year, month = reference_start.month, day = reference_start.day, hour = cutoff_start)
+		relative_stop_cutoff  = datetime.datetime(year = reference_start.year, month = reference_start.month, day = reference_start.day, hour = cutoff_stop)
 
 	num_bins = (relative_stop_cutoff - relative_start_cutoff).total_seconds() + 1
 

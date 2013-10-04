@@ -108,6 +108,8 @@ def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolutio
 
             binarized = numpy.zeros(num_bins)
         else: # The day has legitimate tweets
+            day = map(int, day)
+
             binarized = binarize_timeseries(day, num_bins)
 
         if iresolution != None:

@@ -21,10 +21,11 @@ year = '2011'
 start = 0
 K = 3000-start
 
-users = get_K_users(K = K, start = start, year = year)
+users = get_K_users(K = K, start = start)
 
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
+
 	ofile = open('timeseries/byday-1s-{}.dat'.format(user))
 
 	ires = 60*10

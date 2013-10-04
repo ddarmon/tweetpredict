@@ -6,9 +6,9 @@ from filter_data_methods import *
 
 from traintunetest import create_traintunetest
 
-users = get_top_K_users(5000)
+users = get_top_K_users(3000, year = None)
 
-wfile = open('tweet_rate_coarsened.dat', 'w')
+wfile = open('tweet_rate_coarsened-2011-same.dat', 'w')
 
 wfile.write('user_id\ttweets per unit time\n')
 
@@ -18,7 +18,7 @@ for user_num in range(0, 3000):
 
 	suffix = user_id
 
-	fname = 'timeseries_alldays/byday-600s-{}.dat'.format(suffix)
+	fname = 'timeseries/byday-600s-{}.dat'.format(suffix)
 
 	ofile = open(fname)
 

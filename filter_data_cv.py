@@ -10,8 +10,7 @@ from traintunetest import create_traintunetest_cv, cleanup_cv
 
 year = '2011'
 
-# rank_start = 0 # The ith most highly tweeting user, where we start
-rank_start = 2907 # The ith most highly tweeting user, where we start
+rank_start = 0 # The ith most highly tweeting user, where we start
                 # counting at 0.
 
 # To get the proper place to start up, from the failed run, compute
@@ -19,7 +18,7 @@ rank_start = 2907 # The ith most highly tweeting user, where we start
 
 K = 3000-rank_start
 
-users = get_K_users(K = K, start = rank_start, year = year)
+users = get_K_users(K = K, start = rank_start, year = None)
 
 metric_num = 0
 
@@ -35,7 +34,7 @@ cm_rates = numpy.zeros(len(users))
 
 baseline_rates = numpy.zeros(len(users))
 
-ofile = open('filtering_results-cv-{}-append.tsv'.format(year), 'w')
+ofile = open('filtering_results-cv-{}-same.tsv'.format(year), 'w')
 
 ofile.write('user_id\tRanking\tBaseline Rate\tCM Rate\tNumber of States\tCmu\thmu\tLopt\n')
 
