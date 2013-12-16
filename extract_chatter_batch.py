@@ -1,3 +1,11 @@
+# Extract the number of users active at any given time 
+# instant in the 15K network.
+#
+# This allows us to work on Keith's idea of extracting
+# network structure using the properties of the timeseries.
+#
+#   DMD, 041113-15-18
+
 import ipdb
 import numpy
 import pylab
@@ -41,9 +49,9 @@ for fname in files:
         time_all_tweets.append(cur_time)
         
         if user in user_dict: # If the user is in the dictionary, add the time to the list of times they tweeted.
-            user_dict[user].append(cur_time)
+            user_dict[user][cur_time] = 1
         else: # If not, add the user to the dictionary and record the time of their first tweet
-            user_dict[user] = [cur_time]
+            user_dict[user] = {cur_time : 1}
 
     ofile.close()
 
@@ -67,33 +75,15 @@ time_all_tweets.sort() # Sorts the times of the tweets from oldest to newest
 reference_start = time_all_tweets[0]
 reference_stop  = time_all_tweets[-1]
 
-# iresolution = 60*10
-iresolution = None
+with open('activity_by_second.dat', 'w') as wfile:
+    for time_ind in xrange(int((reference_stop - reference_start).total_seconds())):
+        if time_ind%1000 == 0:
+            print 'At time {} of {}'.format(time_ind, (reference_stop - reference_start).total_seconds())
 
-for user_rank in xrange(0, 3000):
-    print 'Working on the user with the {}th tweet rate'.format(user_rank)
-    user_id = str(num_tweets[1, sort_inds][user_rank])
+        cur_time = reference_start + datetime.timedelta(seconds = time_ind)
 
-    ts = user_dict[user_id]
+        for user in user_dict:
+            if user_dict[user].get(cur_time, 0) == 1:
+                wfile.write('{}\t'.format(user))
 
-    ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
-
-    # You could use these if you *don't* want to forward- and back-pad with empty
-    # days.
-
-    # reference_start = ts[0]
-    # reference_stop  = ts[-1]
-
-    ts_by_day, days, num_bins = divide_by_day(reference_start, reference_stop, ts, user_id = user_id)
-
-    include_idxs = []
-
-    for idx, day in enumerate(days):
-        if include_date(day):
-            include_idxs.append(idx)
-
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
-
-    # with open('2011_tweetrank.txt', 'w') as ofile:
-    #     for ind in range(num_tweets.shape[1]):
-    #         ofile.write('{}\t{}\n'.format(num_tweets[1, sort_inds][ind], num_tweets[0, sort_inds][ind]))
+        wfile.write('\n')

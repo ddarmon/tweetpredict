@@ -1,3 +1,14 @@
+# Extract the *time* (with the first tweet for a user 
+# as a 0 reference) in a day that a tweet occurred for each
+# user.
+
+# This allows us to compute things like intertweet intervals,
+# as done in the work done with:
+#
+#   *Scaling-Laws of Human Broadcast Communication Enable Distinction between Human, Corporate and Robot Twitter Users*
+#
+#   DMD, 251013-13-42
+
 import ipdb
 import numpy
 import pylab
@@ -8,8 +19,8 @@ from dividebyday import divide_by_day, binarize_timeseries
 
 from extract_timeseries_methods import *
 
-files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
-# files = ['../timeseries_2011.tsv']
+# files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
+files = ['../timeseries_2011.tsv']
 
 # Create hash table of the form {userid : [time_of_tweet1, time_of_tweet2, ..., time_of_tweetT]}
 
@@ -70,7 +81,7 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(0, 3000):
+for user_rank in xrange(0, len(user_dict)):
     print 'Working on the user with the {}th tweet rate'.format(user_rank)
     user_id = str(num_tweets[1, sort_inds][user_rank])
 
@@ -78,22 +89,8 @@ for user_rank in xrange(0, 3000):
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
 
-    # You could use these if you *don't* want to forward- and back-pad with empty
-    # days.
+    with open('tweet_times_2011/tweet_times_{}.dat'.format(user_id), 'w') as wfile:
+        for cur_time in ts:
+            diff_in_secs = int((cur_time - reference_start).total_seconds())
 
-    # reference_start = ts[0]
-    # reference_stop  = ts[-1]
-
-    ts_by_day, days, num_bins = divide_by_day(reference_start, reference_stop, ts, user_id = user_id)
-
-    include_idxs = []
-
-    for idx, day in enumerate(days):
-        if include_date(day):
-            include_idxs.append(idx)
-
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
-
-    # with open('2011_tweetrank.txt', 'w') as ofile:
-    #     for ind in range(num_tweets.shape[1]):
-    #         ofile.write('{}\t{}\n'.format(num_tweets[1, sort_inds][ind], num_tweets[0, sort_inds][ind]))
+            wfile.write('{}\n'.format(diff_in_secs))
