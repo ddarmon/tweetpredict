@@ -161,9 +161,12 @@ for edge_ind, edge in enumerate(edge_list):
 
 	# Estimate the informational coherence.
 
-	IC = mi / numpy.min((H_x, H_y))
+	if mi == 0 or numpy.min((H_x, H_y)) == 0: # We use the convention that 0/0 = 0.
+		IC = 0
+	else:
+		IC = mi / numpy.min((H_x, H_y))
 
-	ICs.append(IC)
+	ICs.append(numpy.max(IC, 0))
 
 with open('mutual-information-{}s-2011-sparse.dat'.format(ires), 'w') as wfile:
 	for edge_ind, edge in enumerate(edge_list):
