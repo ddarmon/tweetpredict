@@ -16,75 +16,21 @@ from itertools import islice
 
 from filter_data_methods import *
 
-# The (undirected) edges in the network.
+from statsmodels.distributions.empirical_distribution import ECDF
 
-edge_list = []
-
-with open('/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/edge_list_3K_user_connected.txt') as ofile:
-	for line in ofile:
-		lsplit = map(int, line.strip().split(' '))
-		edge_list.append((lsplit[0], lsplit[1]))
-
-# A dictionary mapping from the nodeid to the userid.
-
-user_lookup = {}
-
-with open('/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/node_lookup_table_3K_connected.txt') as ofile:
-	for line in islice(ofile, 1, None):
-		lsplit = map(int, line.strip().split('\t'))
-
-		userid = lsplit[0]; nodeid = lsplit[1]
-
-		user_lookup[nodeid] = userid
-
-ICs = []
-
-folder = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011'
-# ires   = 60*5
-ires   = 60*10
-# ires   = 60*15
-
-V = len(edge_list)
-
-for edge_ind, edge in enumerate(edge_list):
-	u1 = edge[0]; u2 = edge[1]
-
-	print 'Working on user pair ({}, {}), edge {} of {}...'.format(u1, u2, edge_ind, V)
-
-	fname1 = '{}/byday-{}s-{}.dat'.format(folder, ires, user_lookup[u1])
-
-	# Read in the two timeseries of interest.
-
-	with open(fname1) as ofile:
-		# Since mutual information doesn't incorporate any sort
-		# of lag, we'll concatenate all of the days together.
-
-		timeseries1 = ''
-
-		for line in ofile:
-			timeseries1 += line.rstrip('\n')
+def compute_normMI(timeseries1, timeseries2, symbols = [0, 1]):
+	# Compute the normalized mutual information between 
+	# timeseries1 and timeseries2.
 
 	# Create a new, empty count array
 
 	count_array = collections.defaultdict(int)
-
-	fname2 = '{}/byday-{}s-{}.dat'.format(folder, ires, user_lookup[u2])
-
-	with open(fname2) as ofile:
-		timeseries2 = ''
-
-		for line in ofile:
-			timeseries2 += line.rstrip('\n')
 
 	# Compute the joint counts.
 
 	n = len(timeseries1)
 
 	assert n == len(timeseries2), 'The time series are of different length!'
-
-	# The symbols we'll use. Assume binary.
-
-	symbols = ['0', '1']
 
 	n_symbols = len(symbols)
 
@@ -166,8 +112,177 @@ for edge_ind, edge in enumerate(edge_list):
 	else:
 		IC = mi / numpy.min((H_x, H_y))
 
-	ICs.append(numpy.max(IC, 0))
+	return IC
 
-with open('mutual-information-{}s-2011-sparse.dat'.format(ires), 'w') as wfile:
+def sim_CSM(CSM_name, num_its, num_sims):
+	# Simulate from the CSM stored in fname for n iterates.
+
+	fname = '{}.dat_inf.dot'.format(CSM_name)
+
+	with open(fname) as ofile:
+		line = ofile.readline()
+
+		while line[0] != '0':
+			line = ofile.readline()
+
+		CSM = collections.defaultdict(state)
+
+		while line != '}':
+			lsplit = line.split()
+
+			from_state = lsplit[0]
+			to_state = lsplit[2]
+			esymbol = int(lsplit[5][1])
+			eprob = float(lsplit[6])
+			
+			if esymbol == 0:
+				CSM[from_state].setEmit0State(to_state, eprob)
+			elif esymbol == 1:
+				CSM[from_state].setEmit1State(to_state)
+			
+			line = ofile.readline()
+
+	n_states = len(CSM)
+
+	urand = numpy.random.rand(num_its*num_sims)
+
+	symbol_seq = ''
+
+	cur_state = str(numpy.random.randint(0, n_states)) # Set the initial state at random
+
+
+	for ind in range(num_its*num_sims):
+		# The following probability isn't foolproof, since
+		# we could run into the problem of pemit0 = None
+
+		if urand[ind] < CSM[cur_state].p_emit0:
+			if ind % num_its == 0 and ind != 0:
+				symbol_seq += '\n{}'.format(0)
+			else:
+				symbol_seq += '{}'.format(0)
+			cur_state = CSM[cur_state].s_emit0
+		else:
+			if ind % num_its == 0 and ind != 0:
+				symbol_seq += '\n{}'.format(1)
+			else:
+				symbol_seq += '{}'.format(1)
+			cur_state = CSM[cur_state].s_emit1
+
+	return symbol_seq
+
+to_bootstrap = True
+num_bootstrap = 1000
+
+# The (undirected) edges in the network.
+
+edge_list = []
+
+with open('/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/edge_list_3K_user_connected.txt') as ofile:
+	for line in ofile:
+		lsplit = map(int, line.strip().split(' '))
+		edge_list.append((lsplit[0], lsplit[1]))
+
+# A dictionary mapping from the nodeid to the userid.
+
+user_lookup = {}
+
+with open('/Users/daviddarmon/Documents/R/Research/tweetpredict/community_structure/node_lookup_table_3K_connected.txt') as ofile:
+	for line in islice(ofile, 1, None):
+		lsplit = map(int, line.strip().split('\t'))
+
+		userid = lsplit[0]; nodeid = lsplit[1]
+
+		user_lookup[nodeid] = userid
+
+ICs = []
+
+folder = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011'
+# ires   = 60*5
+ires   = 60*10
+# ires   = 60*15
+
+ts_generated = {}
+
+edge_list = edge_list[:]
+
+V = len(edge_list)
+
+with open('mutual-information-{}s-2011-sparse-ps.dat'.format(ires), 'w') as wfile:
 	for edge_ind, edge in enumerate(edge_list):
-		wfile.write('{}\t{}\t{}\n'.format(edge[0], edge[1], ICs[edge_ind]))
+		u1 = edge[0]; u2 = edge[1]
+
+		print 'Working on user pair ({}, {}), edge {} of {}...'.format(u1, u2, edge_ind, V)
+
+		fname1 = '{}/byday-{}s-{}.dat'.format(folder, ires, user_lookup[u1])
+
+		# Read in the two timeseries of interest.
+
+		with open(fname1) as ofile:
+			# Since mutual information doesn't incorporate any sort
+			# of lag, we'll concatenate all of the days together.
+
+			timeseries1 = ''
+
+			for line in ofile:
+				timeseries1 += line.rstrip('\n')
+
+		fname2 = '{}/byday-{}s-{}.dat'.format(folder, ires, user_lookup[u2])
+
+		with open(fname2) as ofile:
+			timeseries2 = ''
+
+			for line in ofile:
+				timeseries2 += line.rstrip('\n')
+
+		# The symbols we'll use. Assume binary.
+
+		symbols = ['0', '1']
+
+		IC = compute_normMI(timeseries1, timeseries2, symbols = symbols)
+
+		IC_sims = numpy.zeros(num_bootstrap)
+
+		if to_bootstrap:
+			# Get a bootstrapped estimate of the significance of the 
+			# observed mutual information.
+
+			if u1 in ts_generated:
+				ts1s = [line.strip() for line in open('/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/bootstrap_ts/u{}.dat'.format(u1))]
+			else:
+				machine1 = '{}/byday-{}s-{}{}'.format(folder, ires, user_lookup[u1], '-train+tune')
+
+				ts1s = sim_CSM(machine1, len(timeseries1), num_sims = num_bootstrap)
+
+				open('/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/bootstrap_ts/u{}.dat'.format(u1), 'w').write(ts1s)
+
+				ts1s = ts1s.split('\n')
+
+				ts_generated[u1] = 1
+
+			if u2 in ts_generated:
+				ts2s = [line.strip() for line in open('/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/bootstrap_ts/u{}.dat'.format(u2))]
+			else:
+				machine2 = '{}/byday-{}s-{}{}'.format(folder, ires, user_lookup[u2], '-train+tune')
+
+				ts2s = sim_CSM(machine2, len(timeseries1), num_sims = num_bootstrap)
+
+				open('/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/bootstrap_ts/u{}.dat'.format(u2), 'w').write(ts2s)
+
+				ts2s = ts2s.split('\n')
+
+				ts_generated[u2] = 1
+				
+			for boot in range(num_bootstrap):
+				ts1 = ts1s[boot]; ts2 = ts2s[boot]
+
+				IC_sim = compute_normMI(ts1, ts2, symbols = symbols)
+
+				IC_sims[boot] = IC_sim
+
+			ecdf = ECDF(IC_sims)
+
+			P = 1 - ecdf(IC)
+
+			wfile.write('{} {} {} {}\n'.format(u1, u2, IC, P))
+		else:
+			wfile.write('{} {} {}\n'.format(u1, u2, IC))

@@ -344,6 +344,6 @@ for edge_ind, edge in enumerate(edge_list):
 	else:
 		IC = 0.
 
-	wfile.write('{}\t{}\t{}\n'.format(u1, u2, numpy.max([IC, 0.])))
+	wfile.write('{} {} {}\n'.format(u1, u2, numpy.max([IC, 0.])))
 
 wfile.close()
