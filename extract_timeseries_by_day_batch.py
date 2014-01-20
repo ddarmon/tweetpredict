@@ -8,8 +8,8 @@ from dividebyday import divide_by_day, binarize_timeseries
 
 from extract_timeseries_methods import *
 
-files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
-# files = ['../timeseries_2011.tsv']
+# files = ['../timeseries_a.tsv', '../timeseries_b.tsv', '../timeseries_c.tsv']
+files = ['../timeseries_2011.tsv']
 
 # Create hash table of the form {userid : [time_of_tweet1, time_of_tweet2, ..., time_of_tweetT]}
 

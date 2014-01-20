@@ -207,8 +207,10 @@ edge_list = edge_list[:]
 
 V = len(edge_list)
 
-with open('mutual-information-{}s-2011-sparse-ps.dat'.format(ires), 'w') as wfile:
-	for edge_ind, edge in enumerate(edge_list):
+with open('mutual-information-{}s-2011-sparse-ps-4.dat'.format(ires), 'w') as wfile:
+	# for edge_ind, edge in enumerate(edge_list):
+	for edge_ind in range(66244, len(edge_list)):
+		edge = edge_list[edge_ind]
 		u1 = edge[0]; u2 = edge[1]
 
 		print 'Working on user pair ({}, {}), edge {} of {}...'.format(u1, u2, edge_ind, V)
@@ -246,9 +248,9 @@ with open('mutual-information-{}s-2011-sparse-ps.dat'.format(ires), 'w') as wfil
 			# Get a bootstrapped estimate of the significance of the 
 			# observed mutual information.
 
-			if u1 in ts_generated:
+			try:
 				ts1s = [line.strip() for line in open('/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/bootstrap_ts/u{}.dat'.format(u1))]
-			else:
+			except IOError:
 				machine1 = '{}/byday-{}s-{}{}'.format(folder, ires, user_lookup[u1], '-train+tune')
 
 				ts1s = sim_CSM(machine1, len(timeseries1), num_sims = num_bootstrap)
@@ -259,9 +261,9 @@ with open('mutual-information-{}s-2011-sparse-ps.dat'.format(ires), 'w') as wfil
 
 				ts_generated[u1] = 1
 
-			if u2 in ts_generated:
+			try:
 				ts2s = [line.strip() for line in open('/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/bootstrap_ts/u{}.dat'.format(u2))]
-			else:
+			except IOError:
 				machine2 = '{}/byday-{}s-{}{}'.format(folder, ires, user_lookup[u2], '-train+tune')
 
 				ts2s = sim_CSM(machine2, len(timeseries1), num_sims = num_bootstrap)
@@ -284,5 +286,7 @@ with open('mutual-information-{}s-2011-sparse-ps.dat'.format(ires), 'w') as wfil
 			P = 1 - ecdf(IC)
 
 			wfile.write('{} {} {} {}\n'.format(u1, u2, IC, P))
+
+			wfile.flush()
 		else:
 			wfile.write('{} {} {}\n'.format(u1, u2, IC))
