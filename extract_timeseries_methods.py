@@ -83,11 +83,11 @@ def include_date(date):
 
     return toinclude
 
-def export_ts(ts, user_id, num_bins, toplot = False, saveplot = True, iresolution = None):
+def export_ts(ts, user_id, num_bins, dir_name = 'timeseries', toplot = False, saveplot = True, iresolution = None):
     if iresolution != None:
-        fname = 'timeseries/byday-{0}s-{1}.dat'.format(iresolution, user_id)
+        fname = '{}/byday-{0}s-{1}.dat'.format(dir_name, iresolution, user_id)
     else:
-        fname = 'timeseries/byday-1s-{0}.dat'.format(user_id)
+        fname = '{}/byday-1s-{0}.dat'.format(dir_name, user_id)
     
     ofile = open(fname, 'w')
 

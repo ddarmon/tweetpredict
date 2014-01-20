@@ -70,10 +70,18 @@ reference_stop  = time_all_tweets[-1]
 # iresolution = 60*10
 iresolution = None
 
-for user_rank in xrange(0, 3000):
-    print 'Working on the user with the {}th tweet rate'.format(user_rank)
-    user_id = str(num_tweets[1, sort_inds][user_rank])
+# For use with the user rank data.
 
+# for user_rank in xrange(0, 3000):
+#     print 'Working on the user with the {}th tweet rate'.format(user_rank)
+#     user_id = str(num_tweets[1, sort_inds][user_rank])
+
+with open('/Users/daviddarmon/Documents/Reference/R/Research/2013/sfi-dynComm/data/twitter_network_filtered_nodes.txt') as ofile:
+    user_ids = [line.strip() for line in ofile]
+
+# For user with a prespecified list of users.
+
+for user_id in user_ids:
     ts = user_dict[user_id]
 
     ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
@@ -92,7 +100,7 @@ for user_rank in xrange(0, 3000):
         if include_date(day):
             include_idxs.append(idx)
 
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
+    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, dir_name = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011', toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
 
     # with open('2011_tweetrank.txt', 'w') as ofile:
     #     for ind in range(num_tweets.shape[1]):
