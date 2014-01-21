@@ -1,10 +1,5 @@
-# This file open the raster and .dot file representing
-# the epsilon-machine for a given user. Users can be
-# chosen based on their improvement rate over a 
-# coinflip predictor (order 0 epsilon-machine).
-#
-# Can run this script from the command line as:
-# 	open_files.py improvement_type improvement_rank
+# This file opens the dot file for a specified
+# user.
 #
 #	DMD, 270313-10-47
 
@@ -20,36 +15,24 @@ from filter_data_methods import *
 
 # Import the uid <-> username lookup
 
-rank_start = 0 # The ith most highly tweeting user, where we start
-                # counting at 0.
+# rank_start = 0 # The ith most highly tweeting user, where we start
+#                 # counting at 0.
 
-K = 1000
+# K = 1000
 
-users = get_K_users(K = K, start = rank_start)
+# users = get_K_users(K = K, start = rank_start)
 
-if len(sys.argv) == 1:
-	ind = 0
+with open('/Users/daviddarmon/Documents/Reference/R/Research/2013/sfi-dynComm/data/twitter_network_filtered_nodes.txt') as ofile:
+    users = [line.strip() for line in ofile]
 
-	improvement_type = 'improved'
-else:
-	improvement_type = sys.argv[1]
-	ind = int(sys.argv[2])
+# if len(sys.argv) == 1:
+# 	ind = 0
+# else:
+# 	ind = int(sys.argv[1])
 
-# Import the uids of the improvement_type users, ranked from best->worst
-# (for 'improved') and worst->best (for 'disimproved')
+inds = range(90, 100)
 
-uids = [int(line) for line in open('user_improvements/{}.txt'.format(improvement_type))]
+dir_prefix = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011'
 
-# Import the improvement scores for the users.
-
-rate_lookup = numpy.loadtxt(fname = 'filtering_results.tsv', delimiter = '\t', skiprows = 1)
-
-os.system('open rasters/raster-1s-{}.pdf'.format(users[uids[ind]]))
-os.system('open timeseries/byday-600s-{}-train.dat_inf.dot'.format(users[uids[ind]]))
-
-print 'For user ranked {} with userid {}...'.format(uids[ind], users[uids[ind]])
-print 'The number of inferred states was: {}'.format(int(rate_lookup[uids[ind], 3]))
-print 'The statistical complexity of the inferred epsilon-machine was: {}'.format(rate_lookup[uids[ind], 4])
-print 'The baseline rate was: {}'.format(rate_lookup[uids[ind], 1])
-print 'The cm rate was: {}'.format(rate_lookup[uids[ind], 2])
-print 'The improvement in rate was: {}'.format(rate_lookup[uids[ind], 2] - rate_lookup[uids[ind], 1])
+for ind in inds:
+	os.system('open {}/byday-600s-{}-train+tune.dat_inf.dot'.format(dir_prefix, users[ind]))

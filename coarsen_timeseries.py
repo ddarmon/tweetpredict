@@ -14,14 +14,16 @@ K = 3000-start
 
 users = get_K_users(K = K, start = start)
 
+prefix = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011'
+
 for index, user in enumerate(users):
 	print 'Working on user {} ...'.format(start + index)
-	ofile = open('timeseries_alldays/byday-1s-{}.dat'.format(user))
+	ofile = open('{}/byday-1s-{}.dat'.format(prefix, user))
 
 	ires = 600
 
 	# wfile = open('timeseries_alldays/byday-{}s-{}.dat'.format(ires, user), 'w')
-	wfile = open('timeseries_alldays/byday-{}s-{}.dat'.format(ires, user), 'w')
+	wfile = open('{}/byday-{}s-{}.dat'.format(prefix, ires, user), 'w')
 
 	for ind, line in enumerate(ofile):
 		# For now, remove days 11 through 23

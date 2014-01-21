@@ -81,27 +81,34 @@ with open('/Users/daviddarmon/Documents/Reference/R/Research/2013/sfi-dynComm/da
 
 # For user with a prespecified list of users.
 
-for user_id in user_ids:
-    ts = user_dict[user_id]
+user_ids = user_ids[1461:]
 
-    ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
+for cur_ind, user_id in enumerate(user_ids):
+    print 'On user {} of {}.'.format(cur_ind, len(user_ids))
+    
+    ts = user_dict.get(user_id, None)
 
-    # You could use these if you *don't* want to forward- and back-pad with empty
-    # days.
+    if ts == None: # If the user did not tweet during this time period.
+        pass
+    else:
+        ts.sort() # Sort the users Tweets. For the user ranked 68, for example, one of the Tweets was out of order.
 
-    # reference_start = ts[0]
-    # reference_stop  = ts[-1]
+        # You could use these if you *don't* want to forward- and back-pad with empty
+        # days.
 
-    ts_by_day, days, num_bins = divide_by_day(reference_start, reference_stop, ts, user_id = user_id)
+        # reference_start = ts[0]
+        # reference_stop  = ts[-1]
 
-    include_idxs = []
+        ts_by_day, days, num_bins = divide_by_day(reference_start, reference_stop, ts, user_id = user_id)
 
-    for idx, day in enumerate(days):
-        if include_date(day):
-            include_idxs.append(idx)
+        include_idxs = []
 
-    export_ts(numpy.array(ts_by_day)[include_idxs], user_id, dir_name = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011', toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
+        for idx, day in enumerate(days):
+            if include_date(day):
+                include_idxs.append(idx)
 
-    # with open('2011_tweetrank.txt', 'w') as ofile:
-    #     for ind in range(num_tweets.shape[1]):
-    #         ofile.write('{}\t{}\n'.format(num_tweets[1, sort_inds][ind], num_tweets[0, sort_inds][ind]))
+        export_ts(numpy.array(ts_by_day)[include_idxs], user_id, dir_name = '/Volumes/ddarmon-external/Reference/R/Research/Data/tweetpredict/timeseries_2011', toplot = False, saveplot = False, num_bins = num_bins, iresolution = iresolution)
+
+        # with open('2011_tweetrank.txt', 'w') as ofile:
+        #     for ind in range(num_tweets.shape[1]):
+        #         ofile.write('{}\t{}\n'.format(num_tweets[1, sort_inds][ind], num_tweets[0, sort_inds][ind]))
